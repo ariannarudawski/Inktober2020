@@ -37,7 +37,8 @@ private:
 	// string
 
 	ofTrueTypeFont font;
-	string stringToDraw = "01";
+	ofParameter<string> stringToDraw;
+	ofParameter<bool> drawInnerLines;
 
 	ofParameter<ofVec2f> position;
 	ofParameter<float> spacing;
@@ -49,4 +50,8 @@ private:
 	// flower petals
 
 	ofParameter<ofVec2f> loopSize;
+	ofParameter<float> loopDepth;
+
+	ofParameter<int> numLines;
+	ofParameter<ofVec2f> deltaSize;
 };
