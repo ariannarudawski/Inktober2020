@@ -29,7 +29,7 @@ private:
 
 	// debug
 
-	bool debug = false;
+	bool debug = true;
 
 	ofxPanel gui;
 	ofParameterGroup mainGroup;
@@ -41,8 +41,9 @@ private:
 	ofParameter<bool> drawInnerLines;
 
 	ofParameter<ofVec2f> position;
-	ofParameter<float> spacing;
 	ofParameter<int> size;
+	ofParameter<float> letterSpacing;
+	ofParameter<int> spacing;
 
 	void onUpdateSize(int & newSize);
 	void DrawString(string word, ofPoint position);

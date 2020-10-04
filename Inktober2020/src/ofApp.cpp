@@ -11,11 +11,12 @@ void ofApp::setup()
 
 	// debug gui
 
-	mainGroup.add(stringToDraw.set("string", "02"));
+	mainGroup.add(stringToDraw.set("string", "03"));
 	mainGroup.add(drawInnerLines.set("draw inner lines", false));
 	mainGroup.add(position.set("position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	mainGroup.add(size.set("size", 500, 10, 800));
-	mainGroup.add(spacing.set("spacing", 30, 10, 200));
+	mainGroup.add(letterSpacing.set("letter spacing", 1, -1, 3));
+	mainGroup.add(spacing.set("spacing", 40, 1, 300));
 	mainGroup.add(loopSize.set("loop size", ofVec2f(0.0f, 0.0f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
 	mainGroup.add(loopDepth.set("loop depth", 25, -100, 100));
 
@@ -65,7 +66,7 @@ void ofApp::keyPressed(int key)
 	case ' ':
 		bool resetDrawDebug = debug;
 		debug = false;
-		ofBeginSaveScreenAsSVG("svgs/Inktober2020_" + stringToDraw.get() + ".svg");
+		ofBeginSaveScreenAsSVG("../../../../svgs/Inktober2020_" + stringToDraw.get() + ".svg");
 		draw();
 		ofEndSaveScreenAsSVG();
 		debug = resetDrawDebug;
@@ -89,13 +90,15 @@ void ofApp::DrawString(string word, ofPoint position)
 	vector<glm::vec3> innerPoints;
 	vector<glm::vec3> outerPoints;
 
-	// adjust position for font size 
-
+	// adjust for font size and letter spacing
+		
+	font.setLetterSpacing(letterSpacing.get());
 	position -= ofPoint(font.stringWidth(word) * 0.5f, font.stringHeight(word) * -0.5f);
 
 	// get points
 
 	vector<ofPath> word_path = font.getStringAsPoints(word, true, false);
+
 	for (int word_index = 0; word_index < word.size(); word_index++) 
 	{
 		vector<ofPolyline> outline = word_path[word_index].getOutline();
@@ -108,15 +111,36 @@ void ofApp::DrawString(string word, ofPoint position)
 			innerPoints.clear();
 			outerPoints.clear();
 
-			// get all points
+			// get the baseline from the outline
 
-			outline[o] = outline[o].getResampledBySpacing(spacing);
-			vector<glm::vec3> verts = outline[o].getVertices();
+			ofPolyline baseLine = outline[o];
 
+			// remove last vertex and replace with the first vertex
+
+			baseLine.removeVertex(baseLine.getVertices().size() - 1);
+			baseLine.addVertex(baseLine.getVertices()[0]);
+
+			// calculate the length
+			float length = baseLine.getLengthAtIndex(baseLine.getVertices().size() - 1);
+
+			// resample by the defined density
+			float spacingEqualized = length / ((int)(length/spacing));
+			baseLine = baseLine.getResampledBySpacing(spacingEqualized);
+
+			// remove the last point if it's still a copy of the first)
+
+			ofVec2f first = baseLine.getVertices()[0];
+			ofVec2f last = baseLine.getVertices()[baseLine.getVertices().size() - 1];
+			if (first.distance(last) <= 1)
+				baseLine.removeVertex(baseLine.getVertices().size() - 1);
+
+			// turn all baseline verts into reference points
+
+			vector<glm::vec3> verts = baseLine.getVertices();
 			for (int v = 0; v < verts.size(); v++)
 			{
 				glm::vec3 vertex =  verts[v];
-				glm::vec3 normal = outline[o].getNormalAtIndex(v) * loopDepth.get();
+				glm::vec3 normal = baseLine.getNormalAtIndex(v) * loopDepth.get();
 
 				points.push_back(position + vertex);
 				innerPoints.push_back(position + ((vertex - normal)));
@@ -133,20 +157,14 @@ void ofApp::DrawString(string word, ofPoint position)
 
 				for (int v = 0; v < points.size(); v++)
 				{
-					ofPoint a = points[v];
 					ofPoint b = points[(v + 1) % points.size()];
 					ofPoint c = points[(v + 2) % points.size()];
-					ofPoint d = points[(v + 3) % points.size()];
 
-					ofPoint aInner = innerPoints[v];
 					ofPoint bInner = innerPoints[(v + 1) % points.size()];
 					ofPoint cInner = innerPoints[(v + 2) % points.size()];
-					ofPoint dInner = innerPoints[(v + 3) % points.size()];
 
-					ofPoint aOuter = outerPoints[v];
 					ofPoint bOuter = outerPoints[(v + 1) % points.size()];
 					ofPoint cOuter = outerPoints[(v + 2) % points.size()];
-					ofPoint dOuter = outerPoints[(v + 3) % points.size()];
 
 					float sizeX = loopSize.get().x + (l * deltaSize.get().x);
 					float sizeY = loopSize.get().y + (l * deltaSize.get().y);
@@ -163,15 +181,12 @@ void ofApp::DrawString(string word, ofPoint position)
 					{
 						ofFill();
 
-						ofSetColor(62, 144, 176, 128);
-						ofDrawCircle(aInner, 5);
-						ofDrawCircle(aOuter, 5);
-						ofDrawLine(aOuter, aInner);
+						ofSetColor(62, 144, 176, 100);
+						ofDrawCircle(bInner, 5);
+						ofDrawCircle(bOuter, 5);
+						ofDrawLine(bInner, bOuter);
 
-						ofSetColor(0, 0, 0, 128);
-						ofDrawCircle(a, 5);
-
-						ofSetColor(235, 162, 89, 128);
+						ofSetColor(235, 162, 89, 100);
 						ofDrawCircle(from, 5);
 						ofDrawCircle(cp1, 5);
 						ofDrawCircle(cp2, 5);
@@ -191,6 +206,15 @@ void ofApp::DrawString(string word, ofPoint position)
 			for (int l = 0; l < numLines; ++l)
 			{
 				bLines[l].draw();
+			}
+
+			if (debug)
+			{
+				ofSetColor(0, 0, 0);
+				for (int p = 0; p < points.size(); ++p)
+				{
+					ofDrawCircle(points[p], 5);
+				}
 			}
 		}
 	}
