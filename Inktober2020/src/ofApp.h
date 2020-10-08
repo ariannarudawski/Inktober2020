@@ -30,11 +30,12 @@ private:
 	// debug
 
 	bool debug = true;
-
 	ofxPanel gui;
 	ofParameterGroup mainGroup;
 
 	// string
+
+	ofParameterGroup stringGroup;
 
 	ofTrueTypeFont font;
 	ofParameter<string> stringToDraw;
@@ -46,13 +47,21 @@ private:
 	ofParameter<int> spacing;
 
 	void onUpdateSize(int & newSize);
-	void DrawString(string word, ofPoint position);
+	void DrawCurvesFromString(string word, ofPoint position);
 
-	// flower petals
+	// curves
 
+	ofParameterGroup curvesGroup;
+
+	ofParameter<bool> noiseOn;
 	ofParameter<ofVec2f> loopSize;
 	ofParameter<float> loopDepth;
-
 	ofParameter<int> numLines;
 	ofParameter<ofVec2f> deltaSize;
+	ofParameter<float> curveNoiseTime;
+	ofParameter<float> curveNoiseScale;
+	ofParameter<ofVec2f> curveNoiseResolution;
+
+	void onUpdateNumCurveLines(int & newNum);
+	void onUpdateNoiseFlag(bool & newVal);
 };
