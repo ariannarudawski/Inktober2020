@@ -47,21 +47,27 @@ private:
 	ofParameter<int> spacing;
 
 	void onUpdateSize(int & newSize);
+
+	// types of lines
+
+	ofParameter<bool> drawCurves;
 	void DrawCurvesFromString(string word, ofPoint position);
+	void onToggleDrawCurves(bool & drawCurves);
 
 	// curves
 
 	ofParameterGroup curvesGroup;
 
-	ofParameter<bool> noiseOn;
+	ofParameter<bool> depthNoiseOn;
+	ofParameter<bool> sizeNoiseOn;
 	ofParameter<ofVec2f> loopSize;
 	ofParameter<float> loopDepth;
 	ofParameter<int> numLines;
 	ofParameter<ofVec2f> deltaSize;
 	ofParameter<float> curveNoiseTime;
 	ofParameter<float> curveNoiseScale;
-	ofParameter<ofVec2f> curveNoiseResolution;
+	ofParameter<float> curveNoiseResolution;
 
-	void onUpdateNumCurveLines(int & newNum);
-	void onUpdateNoiseFlag(bool & newVal);
+	void onUpdateDepthNoiseFlag(bool & newVal);
+	void onUpdateSizeNoiseFlag(bool & newVal);
 };

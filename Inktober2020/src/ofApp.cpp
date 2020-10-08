@@ -13,8 +13,8 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "05")); 
-	stringGroup.add(drawInnerLines.set("draw inner lines of letters", false));
+	stringGroup.add(stringToDraw.set("string to draw", "06")); 
+	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
 	stringGroup.add(letterSpacing.set("letter spacing", 1, -1, 3));
@@ -22,36 +22,41 @@ void ofApp::setup()
 
 	size.addListener(this, &ofApp::onUpdateSize);
 
+	// drawing lines gui
+
+	stringGroup.add(drawCurves.set("draw curves", true));
+
+	drawCurves.addListener(this, &ofApp::onToggleDrawCurves);
+
 	// curves gui
 
 	curvesGroup.setName("CURVES");
 
-	curvesGroup.add(noiseOn.set("use noise", false));
 	curvesGroup.add(loopSize.set("loop size", ofVec2f(0.0f, 0.0f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
 	curvesGroup.add(loopDepth.set("loop depth", 25, -100, 100));
 	curvesGroup.add(numLines.set("num lines", 1, 1, 20));
-
-	deltaSize.set("delta loop size", ofVec2f(0.1f, 0.1f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f));
-	if (numLines.get() > 1) 
-		curvesGroup.add(deltaSize);
-	numLines.addListener(this, &ofApp::onUpdateNumCurveLines);
-
+	curvesGroup.add(deltaSize.set("delta loop size", ofVec2f(0.1f, 0.1f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
+	curvesGroup.add(depthNoiseOn.set("use depth noise", false));
+	curvesGroup.add(sizeNoiseOn.set("use size noise", false));
 	curveNoiseTime.set("noise time", 0, 0, 1000);
 	curveNoiseScale.set("noise scale", 1, 0, 100);
-	curveNoiseResolution.set("noise resolution", ofVec2f(0.5, 0.5), ofVec2f(0, 0), ofVec2f(1, 1));
-	if (noiseOn.get())
+	curveNoiseResolution.set("noise resolution", 0.5, 0, 1);
+	if (depthNoiseOn.get() || sizeNoiseOn.get())
 	{
 		curvesGroup.add(curveNoiseTime);
 		curvesGroup.add(curveNoiseScale);
 		curvesGroup.add(curveNoiseResolution);
 	}
-	noiseOn.addListener(this, &ofApp::onUpdateNoiseFlag);
+	depthNoiseOn.addListener(this, &ofApp::onUpdateDepthNoiseFlag);
+	sizeNoiseOn.addListener(this, &ofApp::onUpdateSizeNoiseFlag);
 
 	// tie together gui
 
 	mainGroup.setName("Inktober 2020");
 	mainGroup.add(stringGroup);
-	mainGroup.add(curvesGroup);
+
+	if (drawCurves.get())
+		mainGroup.add(curvesGroup);
 
 	gui.setup(mainGroup);
 
@@ -67,8 +72,12 @@ void ofApp::update()
 
 void ofApp::draw()
 {
-	DrawCurvesFromString(stringToDraw, ofPoint(ofGetWidth() * position.get().x, ofGetHeight() * position.get().y));
+	// draw lines
 
+	if (drawCurves.get())
+		DrawCurvesFromString(stringToDraw, ofPoint(ofGetWidth() * position.get().x, ofGetHeight() * position.get().y));
+
+	// draw mouse 
 	if (debug)
 	{
 		gui.draw();
@@ -113,6 +122,7 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 	vector<glm::vec3> points;
 	vector<glm::vec3> innerPoints;
 	vector<glm::vec3> outerPoints;
+	vector<float> pointNoise;
 
 	// adjust for font size and letter spacing
 		
@@ -134,6 +144,7 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 			points.clear();
 			innerPoints.clear();
 			outerPoints.clear();
+			pointNoise.clear();
 
 			// get the baseline from the outline
 
@@ -162,8 +173,13 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 			vector<glm::vec3> verts = baseLine.getVertices();
 			for (int v = 0; v < verts.size(); v++)
 			{
+				pointNoise.push_back(ofMap(ofNoise(((word_index * 2) + v) * curveNoiseResolution, curveNoiseTime.get()), 0, 1, 0, curveNoiseScale));
+
 				glm::vec3 vertex =  verts[v];
 				glm::vec3 normal = baseLine.getNormalAtIndex(v) * loopDepth.get();
+
+				if (depthNoiseOn)
+					normal *= pointNoise[v];
 
 				points.push_back(position + vertex);
 				innerPoints.push_back(position + ((vertex - normal)));
@@ -181,29 +197,23 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 
 				for (int v = 0; v < points.size(); v++)
 				{
-					ofPoint a = points[(v + 1) % points.size()];
-					ofPoint b = points[(v + 2) % points.size()];
+					ofPoint a = points[v];
+					ofPoint b = points[(v + 1) % points.size()];
 					ofPoint c = (a + b) * 0.5f;
 
-					ofPoint aInner = innerPoints[(v + 1) % points.size()];
-					ofPoint bInner = innerPoints[(v + 2) % points.size()];
+					ofPoint aInner = innerPoints[v];
+					ofPoint bInner = innerPoints[(v + 1) % points.size()];
 
-					ofPoint aOuter = outerPoints[(v + 1) % points.size()];
-					ofPoint bOuter = outerPoints[(v + 2) % points.size()];
+					ofPoint aOuter = outerPoints[v];
+					ofPoint bOuter = outerPoints[(v + 1) % points.size()];
 
 					float sizeX = loopSize.get().x + (l * deltaSize.get().x);
 					float sizeY = loopSize.get().y + (l * deltaSize.get().y);
 
-					if (noiseOn.get())
+					if (sizeNoiseOn.get())
 					{
-						float x = c.x * curveNoiseResolution.get().x;
-						float y = c.y * curveNoiseResolution.get().y;
-
-						float noiseX = ofMap(ofNoise(curveNoiseTime.get(), x, y), 0, 1, -1, 1);
-						float noiseY = ofMap(ofNoise(curveNoiseTime.get() + curveNoiseTime.getMax(), y, x), 0, 1, -1, 1);
-
-						sizeX += noiseX * curveNoiseScale.get();
-						sizeY += noiseY * curveNoiseScale.get();
+						sizeX += pointNoise[v];
+						sizeY += pointNoise[v];
 					}
 
 					ofPoint from = a - (a - aInner) * -sizeX;
@@ -257,20 +267,26 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 	}
 }
 
-void ofApp::onUpdateNumCurveLines(int & newNum)
+void ofApp::onToggleDrawCurves(bool & newDrawCurves)
 {
-	if (newNum > 1 && !curvesGroup.contains(deltaSize.getName()))
-		curvesGroup.add(deltaSize);
+	if (newDrawCurves)
+	{
+		mainGroup.add(curvesGroup);
+	}
 	else
-		curvesGroup.remove(deltaSize);
+	{
+		mainGroup.remove(curvesGroup);
+	}
 
 	gui.setup(mainGroup);
 }
 
-void ofApp::onUpdateNoiseFlag(bool & newVal)
+void ofApp::onUpdateDepthNoiseFlag(bool & newVal)
 {
-	if (newVal && !curvesGroup.contains(curveNoiseTime.getName()))
-	{		
+	if (newVal) sizeNoiseOn = false;
+
+	if ((newVal) && !curvesGroup.contains(curveNoiseTime.getName()))
+	{
 		curvesGroup.add(curveNoiseTime);
 		curvesGroup.add(curveNoiseScale);
 		curvesGroup.add(curveNoiseResolution);
@@ -283,5 +299,24 @@ void ofApp::onUpdateNoiseFlag(bool & newVal)
 	}
 
 	gui.setup(mainGroup);
+}
 
+void ofApp::onUpdateSizeNoiseFlag(bool & newVal)
+{
+	if (newVal) depthNoiseOn = false;
+
+	if ((newVal) && !curvesGroup.contains(curveNoiseTime.getName()))
+	{
+		curvesGroup.add(curveNoiseTime);
+		curvesGroup.add(curveNoiseScale);
+		curvesGroup.add(curveNoiseResolution);
+	}
+	else
+	{
+		curvesGroup.remove(curveNoiseTime);
+		curvesGroup.remove(curveNoiseScale);
+		curvesGroup.remove(curveNoiseResolution);
+	}
+
+	gui.setup(mainGroup);
 }
