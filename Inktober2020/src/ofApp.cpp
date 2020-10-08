@@ -13,7 +13,7 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "06")); 
+	stringGroup.add(stringToDraw.set("string to draw", "07")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -24,9 +24,11 @@ void ofApp::setup()
 
 	// drawing lines gui
 
-	stringGroup.add(drawCurves.set("draw curves", true));
-
+	stringGroup.add(drawCurves.set("draw curves", false));
 	drawCurves.addListener(this, &ofApp::onToggleDrawCurves);
+
+	stringGroup.add(drawMatchsticks.set("draw matchsticks", true));
+	drawMatchsticks.addListener(this, &ofApp::onToggleDrawMatchsticks);
 
 	// curves gui
 
@@ -50,6 +52,15 @@ void ofApp::setup()
 	depthNoiseOn.addListener(this, &ofApp::onUpdateDepthNoiseFlag);
 	sizeNoiseOn.addListener(this, &ofApp::onUpdateSizeNoiseFlag);
 
+	// matchsticks gui
+
+	matchsticksGroup.setName("MATCHSTICKS");
+
+	matchsticksGroup.add(clockwise.set("false"));
+	matchsticksGroup.add(numRays.set("num rays", 3, 0, 25));
+	matchsticksGroup.add(rayDistance.set("ray distance", 5, 1, 500));
+	matchsticksGroup.add(raySourceSpacing.set("ray source spacing", 1, 1, 25));
+
 	// tie together gui
 
 	mainGroup.setName("Inktober 2020");
@@ -57,6 +68,9 @@ void ofApp::setup()
 
 	if (drawCurves.get())
 		mainGroup.add(curvesGroup);
+
+	if (drawMatchsticks.get())
+		mainGroup.add(matchsticksGroup);
 
 	gui.setup(mainGroup);
 
@@ -76,6 +90,9 @@ void ofApp::draw()
 
 	if (drawCurves.get())
 		DrawCurvesFromString(stringToDraw, ofPoint(ofGetWidth() * position.get().x, ofGetHeight() * position.get().y));
+
+	if (drawMatchsticks.get())
+		DrawMatchsticksFromString(stringToDraw, ofPoint(ofGetWidth() * position.get().x, ofGetHeight() * position.get().y));
 
 	// draw mouse 
 	if (debug)
@@ -276,6 +293,135 @@ void ofApp::onToggleDrawCurves(bool & newDrawCurves)
 	else
 	{
 		mainGroup.remove(curvesGroup);
+	}
+
+	gui.setup(mainGroup);
+}
+
+void ofApp::DrawMatchsticksFromString(string word, ofPoint position)
+{
+	if (word.length() <= 0 || word == " ")
+		return;
+
+	// get points for this string
+
+	vector<glm::vec3> points;
+	vector<glm::vec3> innerPoints;
+	vector<glm::vec3> outerPoints;
+	vector<float> pointNoise;
+
+	// adjust for font size and letter spacing
+
+	font.setLetterSpacing(letterSpacing.get());
+	position -= ofPoint(font.stringWidth(word) * 0.5f, font.stringHeight(word) * -0.5f);
+
+	// get points
+
+	vector<ofPath> word_path = font.getStringAsPoints(word, true, false);
+
+	for (int word_index = 0; word_index < word.size(); word_index++)
+	{
+		vector<ofPolyline> outline = word_path[word_index].getOutline();
+
+		for (int o = 0; o < (drawInnerLines ? outline.size() : 1); o++)
+		{
+			// clear points for next iteration
+
+			points.clear();
+			innerPoints.clear();
+			outerPoints.clear();
+			pointNoise.clear();
+
+			// get the baseline from the outline
+
+			ofPolyline baseLine = outline[o];
+
+			// add the first vertex again
+
+			baseLine.addVertex(baseLine.getVertices()[0]);
+
+			// calculate the length
+			float length = baseLine.getLengthAtIndex(baseLine.getVertices().size() - 1);
+
+			// resample by the defined density
+			float spacingEqualized = length / ((int)(length / spacing));
+			baseLine = baseLine.getResampledBySpacing(spacingEqualized);
+
+			// remove the last point if it's still a copy of the first)
+
+			ofVec2f first = baseLine.getVertices()[0];
+			ofVec2f last = baseLine.getVertices()[baseLine.getVertices().size() - 1];
+			if (first.distance(last) <= 1)
+				baseLine.removeVertex(baseLine.getVertices().size() - 1);
+
+			// turn all baseline verts into reference points
+
+			vector<glm::vec3> verts = baseLine.getVertices();
+			for (int v = 0; v < verts.size(); v++)
+			{
+				pointNoise.push_back(ofMap(ofNoise(((word_index * 2) + v) * curveNoiseResolution, curveNoiseTime.get()), 0, 1, 0, curveNoiseScale));
+
+				glm::vec3 vertex = verts[v];
+				glm::vec3 normal = baseLine.getNormalAtIndex(v) * loopDepth.get();
+
+				if (depthNoiseOn)
+					normal *= pointNoise[v];
+
+				points.push_back(position + vertex);
+				innerPoints.push_back(position + ((vertex - normal)));
+				outerPoints.push_back(position + ((vertex + normal)));
+			}
+
+			// create lines
+
+			vector<ofPolyline> bLines;
+
+			for (int l = 0; l < numLines; ++l)
+			{
+				for (int v = 0; v < points.size(); v += raySourceSpacing)
+				{
+					ofPoint a = points[v];
+
+					for (int i = 0; i < numRays.get(); ++i)
+					{
+						ofPolyline bLine;
+						bLine.addVertex(a);
+						bLine.addVertex(points[(v + rayDistance + i) % points.size()]);
+						bLines.push_back(bLine);
+					}
+				}
+			}
+
+			// draw line
+
+			ofSetColor(0);
+
+			for (int l = 0; l < bLines.size(); ++l)
+			{
+				bLines[l].draw();
+			}
+
+			if (debug)
+			{
+				ofSetColor(0, 0, 0);
+				for (int p = 0; p < points.size(); ++p)
+				{
+					ofDrawCircle(points[p], 5);
+				}
+			}
+		}
+	}
+}
+
+void ofApp::onToggleDrawMatchsticks(bool & newDrawMatchsticks)
+{
+	if (newDrawMatchsticks)
+	{
+		mainGroup.add(matchsticksGroup);
+	}
+	else
+	{
+		mainGroup.remove(matchsticksGroup);
 	}
 
 	gui.setup(mainGroup);

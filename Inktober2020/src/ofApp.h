@@ -52,7 +52,11 @@ private:
 
 	ofParameter<bool> drawCurves;
 	void DrawCurvesFromString(string word, ofPoint position);
-	void onToggleDrawCurves(bool & drawCurves);
+	void onToggleDrawCurves(bool & newDrawCurves);
+
+	ofParameter<bool> drawMatchsticks;
+	void DrawMatchsticksFromString(string word, ofPoint position);
+	void onToggleDrawMatchsticks(bool & newDrawMatchsticks);
 
 	// curves
 
@@ -70,4 +74,13 @@ private:
 
 	void onUpdateDepthNoiseFlag(bool & newVal);
 	void onUpdateSizeNoiseFlag(bool & newVal);
+
+	// matchsticks
+
+	ofParameter<bool> clockwise;
+	ofParameter<int> numRays;
+	ofParameter<int> rayDistance;
+	ofParameter<int> raySourceSpacing;
+
+	ofParameterGroup matchsticksGroup;
 };
