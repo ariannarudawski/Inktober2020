@@ -11,7 +11,7 @@ void ofApp::setup()
 
 	// debug gui
 
-	mainGroup.add(stringToDraw.set("string", "03"));
+	mainGroup.add(stringToDraw.set("string", "04")); 
 	mainGroup.add(drawInnerLines.set("draw inner lines", false));
 	mainGroup.add(position.set("position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	mainGroup.add(size.set("size", 500, 10, 800));
@@ -115,9 +115,8 @@ void ofApp::DrawString(string word, ofPoint position)
 
 			ofPolyline baseLine = outline[o];
 
-			// remove last vertex and replace with the first vertex
+			// add the first vertex again
 
-			baseLine.removeVertex(baseLine.getVertices().size() - 1);
 			baseLine.addVertex(baseLine.getVertices()[0]);
 
 			// calculate the length
