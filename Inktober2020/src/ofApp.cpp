@@ -13,7 +13,7 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "09")); 
+	stringGroup.add(stringToDraw.set("string to draw", "10")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -72,6 +72,7 @@ void ofApp::setup()
 	matchsticksGroup.setName("STRIPES");
 
 	stripesGroup.add(stripesFlipByChar.set("flip stripes by char", true));
+	stripesGroup.add(stripesOutsideString.set("draw stripes outside string", true));
 	stripesGroup.add(stripesDensity.set("stripe density", 100, 1, 100));
 	stripesGroup.add(stripesSteps.set("stripe step", 100, 1, 100));
 	stripesGroup.add(stripesNoiseOn.set("use noise", false));
@@ -543,23 +544,28 @@ void ofApp::DrawStripesFromString(string word, ofPoint position)
 					changingAxis += noise;
 				}
 
-				for (int staticAxis = stripesSteps * 0.5; staticAxis < stripeCheckLength; staticAxis += stripesSteps)
+				for (int staticAxis = 0; staticAxis < stripeCheckLength; staticAxis += stripesSteps)
 				{
 					ofPoint point = horizontal ? ofPoint(changingAxis, staticAxis) : ofPoint(staticAxis, changingAxis);
 					bool insideOutline = baseLine.size() >= 3 ? baseLine.inside(point) : false;
 
-					if (insideOutline && !lineOn)
+					if (!lineOn && ((!stripesOutsideString && insideOutline) || (stripesOutsideString && !insideOutline)))
 					{
 						bLines.push_back(ofPolyline());
 						bLines[bLines.size() - 1].addVertex(point);
 						lineOn = true;
 					}
-					else if (!insideOutline && lineOn)
+					else if (lineOn && ((!stripesOutsideString && !insideOutline) || (stripesOutsideString && insideOutline)))
 					{
 						bLines[bLines.size() - 1].addVertex(point);
 						lineOn = false;
 					}
+				}
 
+				if (stripesOutsideString && lineOn)
+				{
+					bLines[bLines.size() - 1].addVertex(horizontal ? ofPoint(changingAxis, ofGetWidth()) : ofPoint(ofGetHeight(), changingAxis));
+					lineOn = false;
 				}
 			}
 

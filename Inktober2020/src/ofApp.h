@@ -95,6 +95,7 @@ private:
 
 	ofParameterGroup stripesGroup;
 
+	ofParameter<bool> stripesOutsideString;
 	ofParameter<bool> stripesFlipByChar;
 	ofParameter<int> stripesDensity;
 	ofParameter<int> stripesSteps;
