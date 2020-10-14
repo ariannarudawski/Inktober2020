@@ -95,7 +95,13 @@ private:
 
 	ofParameterGroup stripesGroup;
 
+	ofParameter<bool> stripesFlipByChar;
 	ofParameter<int> stripesDensity;
 	ofParameter<int> stripesSteps;
+	ofParameter<bool> stripesNoiseOn;
+	ofParameter<float> stripesNoiseTime;
+	ofParameter<float> stripesNoiseScale;
+	ofParameter<float> stripesNoiseResolution;
 
+	void onUpdateStripesNoiseFlag(bool & newVal);
 };

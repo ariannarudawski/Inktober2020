@@ -13,7 +13,7 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "08")); 
+	stringGroup.add(stringToDraw.set("string to draw", "09")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -71,8 +71,21 @@ void ofApp::setup()
 
 	matchsticksGroup.setName("STRIPES");
 
+	stripesGroup.add(stripesFlipByChar.set("flip stripes by char", true));
 	stripesGroup.add(stripesDensity.set("stripe density", 100, 1, 100));
 	stripesGroup.add(stripesSteps.set("stripe step", 100, 1, 100));
+	stripesGroup.add(stripesNoiseOn.set("use noise", false));
+	stripesNoiseTime.set("noise time", 0, 0, 1000);
+	stripesNoiseScale.set("noise scale", 1, 0, 100);
+	stripesNoiseResolution.set("noise resolution", 0.5, 0, 1);
+	if (stripesNoiseOn.get())
+	{
+		stripesGroup.add(stripesNoiseTime);
+		stripesGroup.add(stripesNoiseScale);
+		stripesGroup.add(stripesNoiseResolution);
+	}
+
+	stripesNoiseOn.addListener(this, &ofApp::onUpdateStripesNoiseFlag);
 
 	// tie together gui
 
@@ -510,6 +523,12 @@ void ofApp::DrawStripesFromString(string word, ofPoint position)
 			vector<ofPolyline> bLines;
 
 			bool horizontal = o == 0;
+
+			if (stripesFlipByChar && word_index % 2 == 0)
+			{
+				horizontal = !horizontal;
+			}
+
 			int numLines = horizontal ? ofGetHeight() / stripesDensity : ofGetWidth() / stripesDensity;
 			int stripeCheckLength = horizontal ? ofGetWidth() : ofGetHeight();
 			bool lineOn = false;
@@ -517,6 +536,12 @@ void ofApp::DrawStripesFromString(string word, ofPoint position)
 			for (int line = 0; line < numLines; ++line)
 			{
 				int changingAxis = (line + 0.5f) * stripesDensity;
+
+				if (stripesNoiseOn.get())
+				{
+					float noise = ofMap(ofNoise(((word_index * 2) + line) * stripesNoiseResolution, stripesNoiseTime), 0, 1, -stripesNoiseScale, stripesNoiseScale);
+					changingAxis += noise;
+				}
 
 				for (int staticAxis = stripesSteps * 0.5; staticAxis < stripeCheckLength; staticAxis += stripesSteps)
 				{
@@ -607,6 +632,24 @@ void ofApp::onUpdateSizeNoiseFlag(bool & newVal)
 		curvesGroup.remove(curveNoiseTime);
 		curvesGroup.remove(curveNoiseScale);
 		curvesGroup.remove(curveNoiseResolution);
+	}
+
+	gui.setup(mainGroup);
+}
+
+void ofApp::onUpdateStripesNoiseFlag(bool & newVal)
+{
+	if ((newVal) && !stripesGroup.contains(stripesNoiseTime.getName()))
+	{
+		stripesGroup.add(stripesNoiseTime);
+		stripesGroup.add(stripesNoiseScale);
+		stripesGroup.add(stripesNoiseResolution);
+	}
+	else
+	{
+		stripesGroup.remove(stripesNoiseTime);
+		stripesGroup.remove(stripesNoiseScale);
+		stripesGroup.remove(stripesNoiseResolution);
 	}
 
 	gui.setup(mainGroup);
