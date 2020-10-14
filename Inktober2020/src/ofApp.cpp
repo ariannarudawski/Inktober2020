@@ -8,12 +8,12 @@ void ofApp::setup()
 	ofSetFrameRate(30);
 	ofSetWindowPosition(0, 0);
 	ofBackground(255);
-
+	  
 	// string gui
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "07")); 
+	stringGroup.add(stringToDraw.set("string to draw", "08")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -27,39 +27,52 @@ void ofApp::setup()
 	stringGroup.add(drawCurves.set("draw curves", false));
 	drawCurves.addListener(this, &ofApp::onToggleDrawCurves);
 
-	stringGroup.add(drawMatchsticks.set("draw matchsticks", true));
+	stringGroup.add(drawMatchsticks.set("draw matchsticks", false));
 	drawMatchsticks.addListener(this, &ofApp::onToggleDrawMatchsticks);
+
+	stringGroup.add(drawStripes.set("draw stripes", true));
+	drawStripes.addListener(this, &ofApp::onToggleDrawStripes);
 
 	// curves gui
 
 	curvesGroup.setName("CURVES");
 
-	curvesGroup.add(loopSize.set("loop size", ofVec2f(0.0f, 0.0f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
-	curvesGroup.add(loopDepth.set("loop depth", 25, -100, 100));
-	curvesGroup.add(numLines.set("num lines", 1, 1, 20));
-	curvesGroup.add(deltaSize.set("delta loop size", ofVec2f(0.1f, 0.1f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
-	curvesGroup.add(depthNoiseOn.set("use depth noise", false));
-	curvesGroup.add(sizeNoiseOn.set("use size noise", false));
+	curvesGroup.add(curveSize.set("loop size", ofVec2f(0.0f, 0.0f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
+	curvesGroup.add(curveDepth.set("loop depth", 25, -100, 100));
+	curvesGroup.add(curveNumLines.set("num lines", 1, 1, 20));
+	curvesGroup.add(curveDeltaSize.set("delta loop size", ofVec2f(0.1f, 0.1f), ofVec2f(-1.0f, -1.0f), ofVec2f(1.0f, 1.0f)));
+	curvesGroup.add(curveDepthNoiseOn.set("use depth noise", false));
+	curvesGroup.add(curveSizeNoiseOn.set("use size noise", false));
 	curveNoiseTime.set("noise time", 0, 0, 1000);
 	curveNoiseScale.set("noise scale", 1, 0, 100);
 	curveNoiseResolution.set("noise resolution", 0.5, 0, 1);
-	if (depthNoiseOn.get() || sizeNoiseOn.get())
+	if (curveDepthNoiseOn.get() || curveSizeNoiseOn.get())
 	{
 		curvesGroup.add(curveNoiseTime);
 		curvesGroup.add(curveNoiseScale);
 		curvesGroup.add(curveNoiseResolution);
 	}
-	depthNoiseOn.addListener(this, &ofApp::onUpdateDepthNoiseFlag);
-	sizeNoiseOn.addListener(this, &ofApp::onUpdateSizeNoiseFlag);
+	curveDepthNoiseOn.addListener(this, &ofApp::onUpdateDepthNoiseFlag);
+	curveSizeNoiseOn.addListener(this, &ofApp::onUpdateSizeNoiseFlag);
 
 	// matchsticks gui
 
 	matchsticksGroup.setName("MATCHSTICKS");
 
-	matchsticksGroup.add(clockwise.set("false"));
-	matchsticksGroup.add(numRays.set("num rays", 3, 0, 25));
-	matchsticksGroup.add(rayDistance.set("ray distance", 5, 1, 500));
-	matchsticksGroup.add(raySourceSpacing.set("ray source spacing", 1, 1, 25));
+	matchsticksGroup.add(matchsticksClockwise.set("clockwise", false));
+	matchsticksGroup.add(matchsticksRays.set("num rays", 3, 1, 25));
+	matchsticksGroup.add(matchsticksRayDistance.set("ray distance", 5, 0, 500));
+	matchsticksGroup.add(matchsticksRaySourceSpacing.set("ray source spacing", 1, 1, 25));
+	matchsticksGroup.add(matchstickDepth.set("depth", 1, 1, 100));
+	matchsticksGroup.add(matchstickSourceDepth.set("ray source depth", 0.5, 0, 1));
+	matchsticksGroup.add(matchstickDestDepth.set("ray dest depth", 0.5, 0, 1));
+
+	// stripes gui
+
+	matchsticksGroup.setName("STRIPES");
+
+	stripesGroup.add(stripesDensity.set("stripe density", 100, 1, 100));
+	stripesGroup.add(stripesSteps.set("stripe step", 100, 1, 100));
 
 	// tie together gui
 
@@ -71,6 +84,9 @@ void ofApp::setup()
 
 	if (drawMatchsticks.get())
 		mainGroup.add(matchsticksGroup);
+
+	if (drawStripes.get())
+		mainGroup.add(stripesGroup);
 
 	gui.setup(mainGroup);
 
@@ -93,6 +109,9 @@ void ofApp::draw()
 
 	if (drawMatchsticks.get())
 		DrawMatchsticksFromString(stringToDraw, ofPoint(ofGetWidth() * position.get().x, ofGetHeight() * position.get().y));
+
+	if (drawStripes.get())
+		DrawStripesFromString(stringToDraw, ofPoint(ofGetWidth() * position.get().x, ofGetHeight() * position.get().y));
 
 	// draw mouse 
 	if (debug)
@@ -193,9 +212,9 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 				pointNoise.push_back(ofMap(ofNoise(((word_index * 2) + v) * curveNoiseResolution, curveNoiseTime.get()), 0, 1, 0, curveNoiseScale));
 
 				glm::vec3 vertex =  verts[v];
-				glm::vec3 normal = baseLine.getNormalAtIndex(v) * loopDepth.get();
+				glm::vec3 normal = baseLine.getNormalAtIndex(v) * curveDepth.get();
 
-				if (depthNoiseOn)
+				if (curveDepthNoiseOn)
 					normal *= pointNoise[v];
 
 				points.push_back(position + vertex);
@@ -207,7 +226,7 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 
 			vector<ofPolyline> bLines;
 
-			for (int l = 0; l < numLines; ++l)
+			for (int l = 0; l < curveNumLines; ++l)
 			{
 				ofPolyline bLine;
 				bLine.setClosed(true);
@@ -224,10 +243,10 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 					ofPoint aOuter = outerPoints[v];
 					ofPoint bOuter = outerPoints[(v + 1) % points.size()];
 
-					float sizeX = loopSize.get().x + (l * deltaSize.get().x);
-					float sizeY = loopSize.get().y + (l * deltaSize.get().y);
+					float sizeX = curveSize.get().x + (l * curveDeltaSize.get().x);
+					float sizeY = curveSize.get().y + (l * curveDeltaSize.get().y);
 
-					if (sizeNoiseOn.get())
+					if (curveSizeNoiseOn.get())
 					{
 						sizeX += pointNoise[v];
 						sizeY += pointNoise[v];
@@ -267,7 +286,7 @@ void ofApp::DrawCurvesFromString(string word, ofPoint position)
 
 			ofSetColor(0);
 
-			for (int l = 0; l < numLines; ++l)
+			for (int l = 0; l < curveNumLines; ++l)
 			{
 				bLines[l].draw();
 			}
@@ -362,9 +381,9 @@ void ofApp::DrawMatchsticksFromString(string word, ofPoint position)
 				pointNoise.push_back(ofMap(ofNoise(((word_index * 2) + v) * curveNoiseResolution, curveNoiseTime.get()), 0, 1, 0, curveNoiseScale));
 
 				glm::vec3 vertex = verts[v];
-				glm::vec3 normal = baseLine.getNormalAtIndex(v) * loopDepth.get();
+				glm::vec3 normal = baseLine.getNormalAtIndex(v) * matchstickDepth.get();
 
-				if (depthNoiseOn)
+				if (curveDepthNoiseOn)
 					normal *= pointNoise[v];
 
 				points.push_back(position + vertex);
@@ -376,17 +395,24 @@ void ofApp::DrawMatchsticksFromString(string word, ofPoint position)
 
 			vector<ofPolyline> bLines;
 
-			for (int l = 0; l < numLines; ++l)
+			for (int l = 0; l < curveNumLines; ++l)
 			{
-				for (int v = 0; v < points.size(); v += raySourceSpacing)
+				for (int v = 0; v < points.size(); v += matchsticksRaySourceSpacing)
 				{
-					ofPoint a = points[v];
+					ofPoint aInner = innerPoints[v];
+					ofPoint aOuter = outerPoints[v];
 
-					for (int i = 0; i < numRays.get(); ++i)
+					for (int i = 0; i < matchsticksRays.get(); ++i)
 					{
+						ofPoint bInner = innerPoints[(v + i + matchsticksRayDistance) % points.size()];
+						ofPoint bOuter = outerPoints[(v + i + matchsticksRayDistance) % points.size()];
+
+						ofPoint src = aInner.getInterpolated(aOuter, matchstickSourceDepth);
+						ofPoint dest = bInner.getInterpolated(bOuter, matchstickDestDepth);
+
 						ofPolyline bLine;
-						bLine.addVertex(a);
-						bLine.addVertex(points[(v + rayDistance + i) % points.size()]);
+						bLine.addVertex(src);
+						bLine.addVertex(dest);
 						bLines.push_back(bLine);
 					}
 				}
@@ -427,9 +453,128 @@ void ofApp::onToggleDrawMatchsticks(bool & newDrawMatchsticks)
 	gui.setup(mainGroup);
 }
 
+void ofApp::DrawStripesFromString(string word, ofPoint position)
+{
+	if (word.length() <= 0 || word == " ")
+		return;
+
+	// get points for this string
+
+	ofPolyline baseLine;
+	baseLine.setClosed(true);
+
+	// adjust for font size and letter spacing
+
+	font.setLetterSpacing(letterSpacing.get());
+	position -= ofPoint(font.stringWidth(word) * 0.5f, font.stringHeight(word) * -0.5f);
+
+	// get points
+
+	vector<ofPath> word_path = font.getStringAsPoints(word, true, false);
+
+	for (int word_index = 0; word_index < word.size(); word_index++)
+	{
+		vector<ofPolyline> outline = word_path[word_index].getOutline();
+
+		for (int o = 0; o < (drawInnerLines ? outline.size() : 1); o++)
+		{
+			// add the first vertex again
+
+			outline[o].addVertex(outline[o].getVertices()[0]);
+
+			// calculate the length
+			float length = outline[o].getLengthAtIndex(outline[o].getVertices().size() - 1);
+
+			// resample by the defined density
+			float spacingEqualized = length / ((int)(length / spacing));
+			outline[o] = outline[o].getResampledBySpacing(spacingEqualized);
+
+			// remove the last point if it's still a copy of the first)
+
+			ofVec2f first = outline[o].getVertices()[0];
+			ofVec2f last = outline[o].getVertices()[outline[o].getVertices().size() - 1];
+			if (first.distance(last) <= 1)
+				outline[o].removeVertex(outline[o].getVertices().size() - 1);
+
+			// turn all baseline verts into reference points
+
+			vector<glm::vec3> verts = outline[o].getVertices();
+			for (int v = 0; v < verts.size(); v++)
+			{
+				glm::vec3 vertex = verts[v];
+				baseLine.addVertex(position + vertex);
+			}
+
+			// iterate through the axis and draw lines if they are within the baseline 
+
+			vector<ofPolyline> bLines;
+
+			bool horizontal = o == 0;
+			int numLines = horizontal ? ofGetHeight() / stripesDensity : ofGetWidth() / stripesDensity;
+			int stripeCheckLength = horizontal ? ofGetWidth() : ofGetHeight();
+			bool lineOn = false;
+
+			for (int line = 0; line < numLines; ++line)
+			{
+				int changingAxis = (line + 0.5f) * stripesDensity;
+
+				for (int staticAxis = stripesSteps * 0.5; staticAxis < stripeCheckLength; staticAxis += stripesSteps)
+				{
+					ofPoint point = horizontal ? ofPoint(changingAxis, staticAxis) : ofPoint(staticAxis, changingAxis);
+					bool insideOutline = baseLine.size() >= 3 ? baseLine.inside(point) : false;
+
+					if (insideOutline && !lineOn)
+					{
+						bLines.push_back(ofPolyline());
+						bLines[bLines.size() - 1].addVertex(point);
+						lineOn = true;
+					}
+					else if (!insideOutline && lineOn)
+					{
+						bLines[bLines.size() - 1].addVertex(point);
+						lineOn = false;
+					}
+
+				}
+			}
+
+			// draw line
+
+			ofSetColor(0);
+
+			for (int l = 0; l < bLines.size(); ++l)
+			{
+				bLines[l].draw();
+			}
+
+			if (debug)
+			{
+				ofSetColor(0, 0, 0, 100);
+				baseLine.draw();
+			}
+
+			baseLine.clear();
+		}
+	}
+}
+
+void ofApp::onToggleDrawStripes(bool & newDrawStripes)
+{
+	if (newDrawStripes)
+	{
+		mainGroup.add(stripesGroup);
+	}
+	else
+	{
+		mainGroup.remove(stripesGroup);
+	}
+
+	gui.setup(mainGroup);
+}
+
 void ofApp::onUpdateDepthNoiseFlag(bool & newVal)
 {
-	if (newVal) sizeNoiseOn = false;
+	if (newVal) curveSizeNoiseOn = false;
 
 	if ((newVal) && !curvesGroup.contains(curveNoiseTime.getName()))
 	{
@@ -449,7 +594,7 @@ void ofApp::onUpdateDepthNoiseFlag(bool & newVal)
 
 void ofApp::onUpdateSizeNoiseFlag(bool & newVal)
 {
-	if (newVal) depthNoiseOn = false;
+	if (newVal) curveDepthNoiseOn = false;
 
 	if ((newVal) && !curvesGroup.contains(curveNoiseTime.getName()))
 	{

@@ -58,16 +58,20 @@ private:
 	void DrawMatchsticksFromString(string word, ofPoint position);
 	void onToggleDrawMatchsticks(bool & newDrawMatchsticks);
 
+	ofParameter<bool> drawStripes;
+	void DrawStripesFromString(string word, ofPoint position);
+	void onToggleDrawStripes(bool & newDrawMatchsticks);
+
 	// curves
 
 	ofParameterGroup curvesGroup;
 
-	ofParameter<bool> depthNoiseOn;
-	ofParameter<bool> sizeNoiseOn;
-	ofParameter<ofVec2f> loopSize;
-	ofParameter<float> loopDepth;
-	ofParameter<int> numLines;
-	ofParameter<ofVec2f> deltaSize;
+	ofParameter<bool> curveDepthNoiseOn;
+	ofParameter<bool> curveSizeNoiseOn;
+	ofParameter<ofVec2f> curveSize;
+	ofParameter<float> curveDepth;
+	ofParameter<int> curveNumLines;
+	ofParameter<ofVec2f> curveDeltaSize;
 	ofParameter<float> curveNoiseTime;
 	ofParameter<float> curveNoiseScale;
 	ofParameter<float> curveNoiseResolution;
@@ -77,10 +81,21 @@ private:
 
 	// matchsticks
 
-	ofParameter<bool> clockwise;
-	ofParameter<int> numRays;
-	ofParameter<int> rayDistance;
-	ofParameter<int> raySourceSpacing;
-
 	ofParameterGroup matchsticksGroup;
+
+	ofParameter<bool> matchsticksClockwise;
+	ofParameter<int> matchsticksRays;
+	ofParameter<int> matchsticksRayDistance;
+	ofParameter<int> matchsticksRaySourceSpacing;
+	ofParameter<float> matchstickDepth;
+	ofParameter<float> matchstickSourceDepth;
+	ofParameter<float> matchstickDestDepth;
+
+	// stripes
+
+	ofParameterGroup stripesGroup;
+
+	ofParameter<int> stripesDensity;
+	ofParameter<int> stripesSteps;
+
 };
