@@ -18,6 +18,7 @@ public:
 		drawLines.addListener(this, &LineDrawer::onToggleDrawLines);
 		drawLines.addListener(app, &ofApp::onUpdateBool);
 	};
+
 	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug) = 0;
 
 	string getName()

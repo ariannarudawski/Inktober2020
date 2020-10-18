@@ -6,6 +6,7 @@
 #include "CurveDrawer.h"
 #include "MatchsticksDrawer.h"
 #include "StripesDrawer.h"
+#include "CrissCrossDrawer.h"
 
 void ofApp::setup()
 {
@@ -17,7 +18,7 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "11")); 
+	stringGroup.add(stringToDraw.set("string to draw", "12")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -33,6 +34,7 @@ void ofApp::setup()
 	lineDrawers.push_back(new CurveDrawer(&mainGroup));
 	lineDrawers.push_back(new MatchsticksDrawer(&mainGroup));
 	lineDrawers.push_back(new StripesDrawer(&mainGroup));
+	lineDrawers.push_back(new CrissCrossDrawer(&mainGroup));
 
 	for (auto & drawer : lineDrawers)
 	{
