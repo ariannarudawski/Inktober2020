@@ -5,6 +5,8 @@
 #include "ofMain.h"
 #include "ofxGui.h"
 
+class LineDrawer;
+
 class ofApp : public ofBaseApp
 {
 
@@ -24,6 +26,12 @@ public:
 	void windowResized(int w, int h) {};
 	void dragEvent(ofDragInfo dragInfo) {};
 	void gotMessage(ofMessage msg) {};
+
+	void UpdateGUI();
+
+	void onUpdateBool(bool & newVal);
+	void onUpdateInt(int & newVal);
+	void onUpdateFloat(float & newVal);
 
 private:
 
@@ -47,62 +55,11 @@ private:
 	ofParameter<int> spacing;
 
 	void onUpdateSize(int & newSize);
+	 
+	// line drawing 
 
-	// types of lines
+	ofParameterGroup linesGroup;
 
-	ofParameter<bool> drawCurves;
-	void DrawCurvesFromString(string word, ofPoint position);
-	void onToggleDrawCurves(bool & newDrawCurves);
-
-	ofParameter<bool> drawMatchsticks;
-	void DrawMatchsticksFromString(string word, ofPoint position);
-	void onToggleDrawMatchsticks(bool & newDrawMatchsticks);
-
-	ofParameter<bool> drawStripes;
-	void DrawStripesFromString(string word, ofPoint position);
-	void onToggleDrawStripes(bool & newDrawMatchsticks);
-
-	// curves
-
-	ofParameterGroup curvesGroup;
-
-	ofParameter<bool> curveDepthNoiseOn;
-	ofParameter<bool> curveSizeNoiseOn;
-	ofParameter<ofVec2f> curveSize;
-	ofParameter<float> curveDepth;
-	ofParameter<int> curveNumLines;
-	ofParameter<ofVec2f> curveDeltaSize;
-	ofParameter<float> curveNoiseTime;
-	ofParameter<float> curveNoiseScale;
-	ofParameter<float> curveNoiseResolution;
-
-	void onUpdateDepthNoiseFlag(bool & newVal);
-	void onUpdateSizeNoiseFlag(bool & newVal);
-
-	// matchsticks
-
-	ofParameterGroup matchsticksGroup;
-
-	ofParameter<bool> matchsticksClockwise;
-	ofParameter<int> matchsticksRays;
-	ofParameter<int> matchsticksRayDistance;
-	ofParameter<int> matchsticksRaySourceSpacing;
-	ofParameter<float> matchstickDepth;
-	ofParameter<float> matchstickSourceDepth;
-	ofParameter<float> matchstickDestDepth;
-
-	// stripes
-
-	ofParameterGroup stripesGroup;
-
-	ofParameter<bool> stripesOutsideString;
-	ofParameter<bool> stripesFlipByChar;
-	ofParameter<int> stripesDensity;
-	ofParameter<int> stripesSteps;
-	ofParameter<bool> stripesNoiseOn;
-	ofParameter<float> stripesNoiseTime;
-	ofParameter<float> stripesNoiseScale;
-	ofParameter<float> stripesNoiseResolution;
-
-	void onUpdateStripesNoiseFlag(bool & newVal);
+	vector<vector<ofPolyline>> GetAllCharOutlines();
+	vector<LineDrawer*> lineDrawers;
 };
