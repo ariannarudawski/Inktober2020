@@ -48,12 +48,14 @@ private:
 	ofTrueTypeFont font;
 	ofParameter<string> stringToDraw;
 	ofParameter<bool> drawInnerLines;
+	ofParameter<bool> respace;
 
 	ofParameter<ofVec2f> position;
 	ofParameter<int> size;
 	ofParameter<float> letterSpacing;
 	ofParameter<int> spacing;
 
+	void onUpdateSpacingFlag(bool & newVal);
 	void onUpdateSize(int & newSize);
 	 
 	// line drawing 

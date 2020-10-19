@@ -10,6 +10,7 @@ CrissCrossDrawer::CrissCrossDrawer(ofParameterGroup * mainGroup)
 	lineGroup.setName("CRISS CROSS");
 
 	lineGroup.add(shuffle.set("shuffle vertices", false));
+	lineGroup.add(crissCrossScale.set("scale", 30, 1, 500));
 
 	// noise parameters
 
@@ -91,6 +92,7 @@ bool hasBottomIntersection(ofPoint a, ofPoint b, ofPoint & intersection)
 	return hasIntersection(a, b, ofPoint(0, ofGetHeight()), ofPoint(ofGetWidth(), ofGetHeight()), intersection);
 }
 
+
 void CrissCrossDrawer::setup(ofApp * app)
 {
 	LineDrawer::setup(app);
@@ -115,108 +117,125 @@ void CrissCrossDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 	{
 		for (int co = 0; co < charOutlines[c].size(); ++co)
 		{
-			// get all the verts of this outline
+			vector<ofPolyline> lines;
 
-			vector<glm::vec3> verts = charOutlines[c][co].getVertices();
+			int numVerts = charOutlines[c][co].getVertices().size();
 
-			if (shuffle.get())
+			for (int v = 0; v < numVerts; ++v)
 			{
-				std::shuffle(begin(verts), end(verts), default_random_engine{});
-			}
+				// draw an X at this point
 
-			// create lines to draw through these vertices
+				glm::vec3 vertex = charOutlines[c][co][v];
+				glm::vec3 tangent = charOutlines[c][co].getTangentAtIndex(v) * crissCrossScale.get();
+				glm::vec3 normal = charOutlines[c][co].getNormalAtIndex(v) * crissCrossScale.get();
 
-			vector<ofPolyline> bLines;
-
-			for (int v = 0; v < verts.size(); ++v)
-			{
 				ofPolyline line;
+				line.addVertex(vertex - tangent);
+				line.addVertex(vertex + tangent);
+				lines.push_back(line);
 
-				ofPoint a = verts[v];
-				ofPoint b = verts[(v + 1) % verts.size()];
-				ofPoint intersection;
+				line.clear();
+				line.addVertex(vertex - tangent - normal);
+				line.addVertex(vertex + tangent + normal);
+				lines.push_back(line);
 
-				if (hasLeftIntersection(a, b, intersection))
-				{
-					if (noiseOn)
-					{
-						float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
+				line.clear();
+				line.addVertex(vertex - tangent + normal);
+				line.addVertex(vertex + tangent - normal);
+				lines.push_back(line);
 
-						if (isBetween(intersection.y + noise, 0, ofGetHeight()))
-						{
-							line.addVertex(intersection + ofPoint(0, noise));
-						}
-					}
-					else
-					{
-						line.addVertex(intersection);
-					}
-				}
-
-				if (hasRightIntersection(a, b, intersection))
-				{
-					if (noiseOn)
-					{
-						float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
-
-						if (isBetween(intersection.y + noise, 0, ofGetHeight()))
-						{
-							line.addVertex(intersection + ofPoint(0, noise));
-						}
-					}
-					else
-					{
-						line.addVertex(intersection);
-					}
-				}
-
-				if (hasTopIntersection(a, b, intersection))
-				{
-					if (noiseOn)
-					{
-						float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
-
-						if (isBetween(intersection.x + noise, 0, ofGetWidth()))
-						{
-							line.addVertex(intersection + ofPoint(noise, 0));
-						}
-					}
-					else
-					{
-						line.addVertex(intersection);
-					}
-				}
-
-				if (hasBottomIntersection(a, b, intersection))
-				{
-					if (noiseOn)
-					{
-						float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
-
-						if (isBetween(intersection.x + noise, 0, ofGetWidth()))
-						{
-							line.addVertex(intersection + ofPoint(noise, 0));
-						}
-					}
-					else
-					{
-						line.addVertex(intersection);
-					}
-				}
-
-				bLines.push_back(line);
+				line.clear();
+				line.addVertex(vertex - normal);
+				line.addVertex(vertex + normal);
+				lines.push_back(line);
 			}
 
 			// draw lines
 
 			ofSetColor(0);
 
-			for (int l = 0; l < bLines.size(); ++l)
+			for (int l = 0; l < lines.size(); ++l)
 			{
-				bLines[l].draw();
+				lines[l].draw();
 			}
 		}
 	}
+}
+
+ofPolyline CrissCrossDrawer::GetLineForPoints(ofPoint vert, ofPoint towards, float & noiseIndex)
+{
+	ofPolyline line;
+	ofPoint intersection;
+
+	if (hasLeftIntersection(vert, towards, intersection))
+	{
+		if (noiseOn)
+		{
+			float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
+
+			if (isBetween(intersection.y + noise, 0, ofGetHeight()))
+			{
+				line.addVertex(intersection + ofPoint(0, noise));
+			}
+		}
+		else
+		{
+			line.addVertex(intersection);
+		}
+	}
+
+	if (hasRightIntersection(vert, towards, intersection))
+	{
+		if (noiseOn)
+		{
+			float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
+
+			if (isBetween(intersection.y + noise, 0, ofGetHeight()))
+			{
+				line.addVertex(intersection + ofPoint(0, noise));
+			}
+		}
+		else
+		{
+			line.addVertex(intersection);
+		}
+	}
+
+	if (hasTopIntersection(vert, towards, intersection))
+	{
+		if (noiseOn)
+		{
+			float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
+
+			if (isBetween(intersection.x + noise, 0, ofGetWidth()))
+			{
+				line.addVertex(intersection + ofPoint(noise, 0));
+			}
+		}
+		else
+		{
+			line.addVertex(intersection);
+		}
+	}
+
+	if (hasBottomIntersection(vert, towards, intersection))
+	{
+		if (noiseOn)
+		{
+			float noise = ofMap(ofNoise(noiseTime + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale, noiseScale);
+
+			if (isBetween(intersection.x + noise, 0, ofGetWidth()))
+			{
+				line.addVertex(intersection + ofPoint(noise, 0));
+			}
+		}
+		else
+		{
+			line.addVertex(intersection);
+		}
+	}
+
+	return line;
 }
 
 void CrissCrossDrawer::onToggleNoiseOn(bool & newVal)

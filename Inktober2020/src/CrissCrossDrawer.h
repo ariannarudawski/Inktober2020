@@ -17,10 +17,14 @@ private:
 
 	ofParameter<bool> shuffle;
 
+	ofParameter<float> crissCrossScale;
+
 	ofParameter<bool> noiseOn;
 	ofParameter<float> noiseTime;
 	ofParameter<float> noiseScale;
 	ofParameter<float> noiseResolution;
+
+	ofPolyline GetLineForPoints(ofPoint vert, ofPoint towards, float & noiseIndex);
 
 	void onToggleNoiseOn(bool & newVal);
 

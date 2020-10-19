@@ -18,12 +18,20 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "12")); 
+	stringGroup.add(stringToDraw.set("string to draw", "13")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
 	stringGroup.add(letterSpacing.set("letter spacing", 1, -1, 3));
-	stringGroup.add(spacing.set("vertex spacing", 40, 1, 500));
+
+	stringGroup.add(respace.set("respace vertices", true));
+	respace.addListener(this, &ofApp::onUpdateSpacingFlag);
+	spacing.set("vertex spacing", 40, 1, 500);
+
+	if (respace.get())
+	{
+		stringGroup.add(spacing);
+	}
 
 	size.addListener(this, &ofApp::onUpdateSize);
 
@@ -158,6 +166,20 @@ void ofApp::onUpdateFloat(float & newVal)
 	UpdateGUI();
 }
 
+void ofApp::onUpdateSpacingFlag(bool & newVal)
+{
+	if (newVal)
+	{
+		stringGroup.add(spacing);
+	}
+	else
+	{
+		stringGroup.remove(spacing);
+	}
+
+	UpdateGUI();
+}
+
 void ofApp::onUpdateSize(int & newSize)
 {
 	font.loadFont("fonts/ArialBlack.ttf", newSize, true, true, true);
@@ -175,7 +197,11 @@ vector<vector<ofPolyline>> ofApp::GetAllCharOutlines()
 
 	// adjust for font size and letter spacing
 
-	font.setLetterSpacing(letterSpacing.get());
+	if (respace.get())
+	{
+		font.setLetterSpacing(letterSpacing.get());
+	}
+
 	ofPoint pos = ofPoint(position.get().x * ofGetWidth(), position.get().y * ofGetHeight()) - ofPoint(font.stringWidth(word) * 0.5f, font.stringHeight(word) * -0.5f);
 
 	// get points
@@ -196,27 +222,30 @@ vector<vector<ofPolyline>> ofApp::GetAllCharOutlines()
 			}
 		}
 
-		// respace
-
 		for (int o = 0; o < charOutlines.size(); o++)
 		{
-			// add the first vertex again
+			// respace
 
-			charOutlines[o].addVertex(charOutlines[o].getVertices()[0]);
+			if (respace.get())
+			{
+				// add the first vertex again
 
-			// calculate the length
-			float length = charOutlines[o].getLengthAtIndex(charOutlines[o].getVertices().size() - 1);
+				charOutlines[o].addVertex(charOutlines[o].getVertices()[0]);
 
-			// resample by the defined density
-			float spacingEqualized = length / ((int)(length / spacing));
-			charOutlines[o] = charOutlines[o].getResampledBySpacing(spacingEqualized);
+				// calculate the length
+				float length = charOutlines[o].getLengthAtIndex(charOutlines[o].getVertices().size() - 1);
 
-			// remove the last point if it's still a copy of the first)
+				// resample by the defined density
+				float spacingEqualized = length / ((int)(length / spacing));
+				charOutlines[o] = charOutlines[o].getResampledBySpacing(spacingEqualized);
 
-			ofVec2f first = charOutlines[o].getVertices()[0];
-			ofVec2f last = charOutlines[o].getVertices()[charOutlines[o].getVertices().size() - 1];
-			if (first.distance(last) <= 1)
-				charOutlines[o].removeVertex(charOutlines[o].getVertices().size() - 1);
+				// remove the last point if it's still a copy of the first)
+
+				ofVec2f first = charOutlines[o].getVertices()[0];
+				ofVec2f last = charOutlines[o].getVertices()[charOutlines[o].getVertices().size() - 1];
+				if (first.distance(last) <= 1)
+					charOutlines[o].removeVertex(charOutlines[o].getVertices().size() - 1);
+			}
 
 			// adjust by position
 
