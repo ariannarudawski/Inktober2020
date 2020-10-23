@@ -24,15 +24,24 @@ private:
 	};
 
 	ofPolyline findLineToEdge(ofPoint vert);
+	ofPolyline findSliceToEdge(ofPoint vA, ofPoint vB);
 
 	// parameters
 
 	ofParameter<bool> shortestLine;
+	ofParameter<bool> drawSlices;
+
 	ofParameter<bool> useCircularEdge;
 	ofParameter<float> circularEdgeRadius;
 	ofParameter<int> numVertsInCircularEdge;
 
+	ofParameter<bool> noiseOn;
+	ofParameter<float> noiseTime;
+	ofParameter<float> noiseScale;
+	ofParameter<float> noiseResolution;
+
 	void onToggleCircularEdge(bool & newVal);
+	void onToggleNoiseOn(bool & newVal);
 
 };
 
