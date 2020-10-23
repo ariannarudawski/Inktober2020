@@ -10,6 +10,7 @@ public:
 
 	VertToEdgeDrawer(ofParameterGroup * mainGroup);
 
+	virtual void setup(ofApp * app);
 	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug);
 
 private:
@@ -22,6 +23,16 @@ private:
 		}
 	};
 
-	ofPolyline findShortestLineToEdge(ofPoint vert);
+	ofPolyline findLineToEdge(ofPoint vert);
+
+	// parameters
+
+	ofParameter<bool> shortestLine;
+	ofParameter<bool> useCircularEdge;
+	ofParameter<float> circularEdgeRadius;
+	ofParameter<int> numVertsInCircularEdge;
+
+	void onToggleCircularEdge(bool & newVal);
+
 };
 
