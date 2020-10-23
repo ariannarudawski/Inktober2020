@@ -123,18 +123,24 @@ void CrissCrossDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 
 			for (int v = 0; v < numVerts; ++v)
 			{
+				// get noise values
+
+				float noiseTan = 0;
+				float noiseNorm = 0;
+
+				if (noiseOn)
+				{
+					noiseTan = ofMap(ofNoise(noiseTime.get() + 100, noiseIndex += noiseResolution), 0, 1, -noiseScale.get(), noiseScale.get());
+					noiseNorm = ofMap(ofNoise(noiseTime.get() + 800, noiseIndex + 500), 0, 1, -noiseScale.get(), noiseScale.get());
+				}
+
 				// draw an X at this point
 
 				glm::vec3 vertex = charOutlines[c][co][v];
-				glm::vec3 tangent = charOutlines[c][co].getTangentAtIndex(v) * crissCrossScale.get();
-				glm::vec3 normal = charOutlines[c][co].getNormalAtIndex(v) * crissCrossScale.get();
+				glm::vec3 tangent = charOutlines[c][co].getTangentAtIndex(v) * crissCrossScale.get() * noiseTan;
+				glm::vec3 normal = charOutlines[c][co].getNormalAtIndex(v) * crissCrossScale.get() * noiseNorm;
 
 				ofPolyline line;
-				line.addVertex(vertex - tangent);
-				line.addVertex(vertex + tangent);
-				lines.push_back(line);
-
-				line.clear();
 				line.addVertex(vertex - tangent - normal);
 				line.addVertex(vertex + tangent + normal);
 				lines.push_back(line);
@@ -142,11 +148,6 @@ void CrissCrossDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 				line.clear();
 				line.addVertex(vertex - tangent + normal);
 				line.addVertex(vertex + tangent - normal);
-				lines.push_back(line);
-
-				line.clear();
-				line.addVertex(vertex - normal);
-				line.addVertex(vertex + normal);
 				lines.push_back(line);
 			}
 
