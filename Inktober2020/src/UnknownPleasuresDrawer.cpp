@@ -7,116 +7,162 @@ UnknownPleasuresDrawer::UnknownPleasuresDrawer(ofParameterGroup * mainGroup)
 	: LineDrawer(mainGroup)
 {
 	lineGroup.setName("UNKNOWN PLEASURES");
-
+	
 	lineGroup.add(vertical.set("vertical", false));
-	lineGroup.add(stripesDensity.set("stripe density", 100, 1, 100));
-	lineGroup.add(stripesSteps.set("stripe step", 100, 1, 100));
-	lineGroup.add(pointOffset.set("inside char point offset", ofVec2f(0, 30), ofVec2f(-100, -100), ofVec2f(100, 100)));
+	lineGroup.add(stripesDensity.set("stripe density", 40, 1, 300));
+	lineGroup.add(stripesSteps.set("stripe step", 10, 1, 100));
+	lineGroup.add(numLinesToCheckForIntersection.set("num lines to check for intersection", 3, 1, 100));
 
-	lineGroup.add(stripesNoiseOn.set("use noise", false));
-	stripesNoiseTime.set("noise time", 0, 0, 1000);
-	stripesNoiseScale.set("noise scale", 1, 0, 100);
-	stripesNoiseResolution.set("noise resolution", 0.5, 0, 1);
-	if (stripesNoiseOn.get())
-	{
-		lineGroup.add(stripesNoiseTime);
-		lineGroup.add(stripesNoiseScale);
-		lineGroup.add(stripesNoiseResolution);
-	}
+	lineGroup.add(noiseTime.set("noise time", 500, 0, 1000));
+	lineGroup.add(outsideNoiseScale.set("outside noise scale", -5, -100, 100));
+	lineGroup.add(insideNoiseScale.set("inside noise scale", -45, -100, 100));
+	lineGroup.add(noiseResolution.set("noise resolution", ofVec2f(0.979, 1), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
+	lineGroup.add(curveResolution.set("curve resolution", 20, 1, 100));
 
-	stripesNoiseOn.addListener(this, &UnknownPleasuresDrawer::onUpdateStripesNoiseFlag);
+	vertical.addListener(this, &UnknownPleasuresDrawer::onBoolParamsChanged);
+	stripesDensity.addListener(this, &UnknownPleasuresDrawer::onIntParamsChanged);
+	stripesSteps.addListener(this, &UnknownPleasuresDrawer::onIntParamsChanged);
 
+	noiseTime.addListener(this, &UnknownPleasuresDrawer::onFloatParamsChanged);
+	outsideNoiseScale.addListener(this, &UnknownPleasuresDrawer::onFloatParamsChanged);
+	insideNoiseScale.addListener(this, &UnknownPleasuresDrawer::onFloatParamsChanged);
+	noiseResolution.addListener(this, &UnknownPleasuresDrawer::onofVec2fParamsChanged);
+	curveResolution.addListener(this, &UnknownPleasuresDrawer::onIntParamsChanged);
 }
 
-void UnknownPleasuresDrawer::setup(ofApp * app)
-{
-	LineDrawer::setup(app);
-
-	// curve listeners
-
-	stripesNoiseOn.addListener(this, &UnknownPleasuresDrawer::onUpdateStripesNoiseFlag);
-	stripesNoiseOn.addListener(app, &ofApp::onUpdateBool);
-}
 
 void UnknownPleasuresDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 {
 	if (!drawLines.get())
 		return;
 
-	int numLines = vertical.get() ? ofGetHeight() / stripesDensity : ofGetWidth() / stripesDensity;
-	int stripeCheckLength = vertical.get() ? ofGetWidth() : ofGetHeight();
+	// redo lines
 
-	vector<ofPolyline> bLines;
-
-	for (int line = 0; line < numLines; ++line)
+	if (redoLines)
 	{
-		ofPolyline bLine;
-		int changingAxis = (line + 0.5f) * stripesDensity;
+		int numLines = vertical.get() ? ofGetHeight() / stripesDensity : ofGetWidth() / stripesDensity;
+		int stripeCheckLength = vertical.get() ? ofGetWidth() : ofGetHeight();
 
-		for (int staticAxis = 0; staticAxis <= stripeCheckLength;)
+		// find all curved lines
+
+		vector<ofPolyline> cLines;
+		bool lineOn;
+
+		for (int line = 0; line < numLines; ++line)
 		{
-			ofPoint point = vertical ? ofPoint(changingAxis, staticAxis) : ofPoint(staticAxis, changingAxis);
+			ofPolyline cLine;
+			lineOn = true;
 
-			bool insideChar = false;
-			
-			for (int c = 0; c < charOutlines.size(); c++)
+			int changingAxis = ofGetHeight() - ((line + 0.5f) * stripesDensity);
+
+			// find the curved lines for this line
+
+			cLine.addVertex(vertical ? ofPoint(changingAxis, 0) : ofPoint(0, changingAxis));
+
+			for (int staticAxis = 0; staticAxis <= stripeCheckLength;)
 			{
-				if (isInsideChar(point, charOutlines[c]))
+				ofPoint point = vertical ? ofPoint(changingAxis, staticAxis) : ofPoint(staticAxis, changingAxis);
+
+				bool insideChar = false;
+
+				for (int c = 0; c < charOutlines.size(); c++)
 				{
-					insideChar = true;
-					break;
+					if (isInsideChar(point, charOutlines[c]))
+					{
+						insideChar = true;
+						break;
+					}
 				}
-			}
-			
-			if (insideChar)
-			{
-				bLine.addVertex(point + pointOffset.get());
-			}
-			else
-			{
-				bLine.addVertex(point);
+
+				// adjust point with noise
+
+				float noise = ofNoise(line * noiseResolution.get().x, staticAxis * noiseResolution.get().y, noiseTime.get())
+					* (insideChar ? insideNoiseScale.get() : outsideNoiseScale.get());
+
+				point += vertical.get() ? ofPoint(noise, 0) : ofPoint(0, noise);
+
+				cLine.curveTo(point, curveResolution);
+
+				// iterate the static axis
+				// make sure this stripe reaches all the way to the edge
+
+				if (staticAxis < stripeCheckLength)
+				{
+					staticAxis += stripesSteps;
+
+					if (staticAxis > stripeCheckLength)
+						staticAxis = stripeCheckLength;
+				}
+				else
+				{
+					staticAxis += stripesSteps;
+				}
+
 			}
 
-			// make sure this stripe reaches all the way to the edge
-			if (staticAxis < stripeCheckLength)
-			{
-				staticAxis += stripesSteps;
+			// add the final vertex to close the line, then add it to the list
 
-				if (staticAxis > stripeCheckLength)
-					staticAxis = stripeCheckLength;
-			}
-			else
-			{
-				staticAxis += stripesSteps; 
-			}
+			cLine.addVertex(vertical ? ofPoint(changingAxis, stripeCheckLength) : ofPoint(stripeCheckLength, changingAxis));
+			cLines.push_back(cLine);
 		}
 
-		bLines.push_back(bLine);
+		// find intersections and chop up lines
+
+		choppedLines.clear();
+
+		for (int i = cLines.size() - 1 ; i > 0; --i)
+		{
+			vector<glm::vec3> lineVerts = cLines[i].getVertices();
+			cLines.pop_back();
+
+			bool lineOn = true;
+			ofPolyline line;
+
+			for (int v = 0; v < lineVerts.size(); ++v)
+			{
+				ofPoint point = lineVerts[v];
+				bool intersectsExistingLines = pointIntersectsExistingLines(point, cLines);
+
+				if (lineOn)
+				{
+					if (intersectsExistingLines)
+					{
+						// chop this line 
+						// todo: get the correct next point to add as the final vertex				
+						choppedLines.push_back(line);
+						line.clear();
+						lineOn = false;
+					}
+					else
+					{					
+						// continue to draw line
+						line.addVertex(point);
+					}
+				}
+				else if (!lineOn && !intersectsExistingLines)
+				{
+					// restart a chopped line at this point 
+					line.addVertex(point);
+					lineOn = true;
+				}
+			}
+
+			choppedLines.push_back(line);
+		}
+
+		if (cLines.size() > 0)
+			choppedLines.push_back(cLines[0]);
+
+		redoLines = false;
 	}
 
-	// draw line
+	// draw lines
 
 	ofSetColor(0);
 
-	for (int l = 0; l < bLines.size(); ++l)
+	for (int l = 0; l < choppedLines.size(); ++l)
 	{
-		bLines[l].draw();
-	}
-}
-
-void UnknownPleasuresDrawer::onUpdateStripesNoiseFlag(bool & newVal)
-{
-	if ((newVal) && !lineGroup.contains(stripesNoiseTime.getName()))
-	{
-		lineGroup.add(stripesNoiseTime);
-		lineGroup.add(stripesNoiseScale);
-		lineGroup.add(stripesNoiseResolution);
-	}
-	else
-	{
-		lineGroup.remove(stripesNoiseTime);
-		lineGroup.remove(stripesNoiseScale);
-		lineGroup.remove(stripesNoiseResolution);
+		choppedLines[l].draw();
 	}
 }
 
@@ -148,4 +194,35 @@ bool UnknownPleasuresDrawer::isInsideChar(ofPoint point, vector<ofPolyline> char
 	}
 }
 
+bool UnknownPleasuresDrawer::pointIntersectsExistingLines(ofPoint point, vector<ofPolyline> lines)
+{
+	int maxLineToCheck = lines.size() - 1 - numLinesToCheckForIntersection;
+	if (maxLineToCheck < 0)
+		maxLineToCheck = 0;
 
+	for (int i = lines.size() - 1; i >= maxLineToCheck; --i)
+		if (lines[i].inside(point))
+			return true;
+
+	return false;
+}
+
+void UnknownPleasuresDrawer::onBoolParamsChanged(bool & newVal)
+{
+	redoLines = true;
+}
+
+void UnknownPleasuresDrawer::onIntParamsChanged(int & newVal)
+{
+	redoLines = true;
+}
+
+void UnknownPleasuresDrawer::onFloatParamsChanged(float & newVal)
+{
+	redoLines = true;
+}
+
+void UnknownPleasuresDrawer::onofVec2fParamsChanged(ofVec2f & newVal)
+{
+	redoLines = true;
+}

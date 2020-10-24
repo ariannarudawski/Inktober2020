@@ -10,8 +10,6 @@ public:
 
 	UnknownPleasuresDrawer(ofParameterGroup * mainGroup);
 
-	virtual void setup(ofApp * app);
-
 	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug);
 
 private:
@@ -19,15 +17,24 @@ private:
 	ofParameter<bool> vertical;
 	ofParameter<int> stripesDensity;
 	ofParameter<int> stripesSteps;
-	ofParameter<ofVec2f> pointOffset;
 
-	ofParameter<bool> stripesNoiseOn;
-	ofParameter<float> stripesNoiseTime;
-	ofParameter<float> stripesNoiseScale;
-	ofParameter<float> stripesNoiseResolution;
+	ofParameter<float> noiseTime;
+	ofParameter<float> outsideNoiseScale;
+	ofParameter<float> insideNoiseScale;
+	ofParameter<ofVec2f> noiseResolution;
+	ofParameter<int> curveResolution;
+	ofParameter<int> numLinesToCheckForIntersection;
 
-	void onUpdateStripesNoiseFlag(bool & newVal);
+	vector<ofPolyline> choppedLines;
+	bool redoLines = true;
 
 	bool isInsideChar(ofPoint point, vector<ofPolyline> charOutlines);
+	bool pointIntersectsExistingLines(ofPoint, vector<ofPolyline> lines);
+
+	void onBoolParamsChanged(bool & newVal);
+	void onIntParamsChanged(int & newVal);
+	void onFloatParamsChanged(float & newVal);
+	void onofVec2fParamsChanged(ofVec2f & newVal);
+
 };
 
