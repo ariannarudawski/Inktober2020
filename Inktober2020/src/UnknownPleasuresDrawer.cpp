@@ -9,8 +9,8 @@ UnknownPleasuresDrawer::UnknownPleasuresDrawer(ofParameterGroup * mainGroup)
 	lineGroup.setName("UNKNOWN PLEASURES");
 	
 	lineGroup.add(vertical.set("vertical", false));
-	lineGroup.add(stripesDensity.set("stripe density", 40, 1, 300));
-	lineGroup.add(stripesSteps.set("stripe step", 10, 1, 100));
+	lineGroup.add(stripesDensity.set("stripe density", 100, 1, 300));
+	lineGroup.add(stripesSteps.set("stripe step", 100, 1, 100));
 	lineGroup.add(numLinesToCheckForIntersection.set("num lines to check for intersection", 3, 1, 100));
 
 	lineGroup.add(noiseTime.set("noise time", 500, 0, 1000));

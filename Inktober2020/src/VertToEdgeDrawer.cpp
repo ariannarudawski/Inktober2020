@@ -9,6 +9,7 @@ VertToEdgeDrawer::VertToEdgeDrawer(ofParameterGroup * mainGroup)
 	lineGroup.setName("VERTS TO EDGES");
 
 	lineGroup.add(shortestLine.set("use shortest line", true));
+	lineGroup.add(drawTopTwoLines.set("draw all the way through point", false));
 	lineGroup.add(drawSlices.set("draw slices", true));
 
 	lineGroup.add(useCircularEdge.set("circular edge", true));
@@ -136,12 +137,26 @@ ofPolyline VertToEdgeDrawer::findLineToEdge(ofPoint vert)
 	// create the shortest line
 
 	ofPolyline line;
-	line.addVertex(vert);
-
 	if (shortestLine.get())
+	{
 		line.addVertex(distFromVertMap.begin()->second);
+		line.addVertex(vert);
+
+		if (drawTopTwoLines)
+		{
+			line.addVertex((++distFromVertMap.begin())->second);
+		}
+	}
 	else
+	{
 		line.addVertex((--distFromVertMap.end())->second);
+		line.addVertex(vert);
+
+		if (drawTopTwoLines)
+		{
+			line.addVertex((----distFromVertMap.end())->second);
+		}
+	}
 
 	return line;
 }

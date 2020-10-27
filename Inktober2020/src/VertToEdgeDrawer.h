@@ -29,6 +29,7 @@ private:
 	// parameters
 
 	ofParameter<bool> shortestLine;
+	ofParameter<bool> drawTopTwoLines;
 	ofParameter<bool> drawSlices;
 
 	ofParameter<bool> useCircularEdge;
