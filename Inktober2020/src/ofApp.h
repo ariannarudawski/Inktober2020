@@ -33,8 +33,6 @@ public:
 	void onUpdateInt(int & newVal);
 	void onUpdateFloat(float & newVal);
 
-private:
-
 	// debug
 
 	bool debug = true;
