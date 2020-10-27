@@ -6,6 +6,7 @@
 #include "CurveDrawer.h"
 #include "MatchsticksDrawer.h"
 #include "StripesDrawer.h"
+#include "CrissCrossDrawer.h"
 #include "VertToEdgeDrawer.h"
 #include "UnknownPleasuresDrawer.h"
 
@@ -19,7 +20,7 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "19")); 
+	stringGroup.add(stringToDraw.set("string to draw", "18")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -43,6 +44,7 @@ void ofApp::setup()
 	lineDrawers.push_back(new CurveDrawer(&mainGroup));
 	lineDrawers.push_back(new MatchsticksDrawer(&mainGroup));
 	lineDrawers.push_back(new StripesDrawer(&mainGroup));
+	lineDrawers.push_back(new CrissCrossDrawer(&mainGroup));
 	lineDrawers.push_back(new VertToEdgeDrawer(&mainGroup));
 	lineDrawers.push_back(new UnknownPleasuresDrawer(&mainGroup));
 
