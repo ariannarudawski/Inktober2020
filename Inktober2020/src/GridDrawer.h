@@ -3,6 +3,7 @@
 
 #pragma once
 #include "LineDrawer.h"
+#include "ofxClipper.h"
 
 class GridDrawer : public LineDrawer
 {
@@ -18,8 +19,7 @@ private:
 	struct GridSpace
 	{
 		ofRectangle gridBounds;
-		ofPolyline line;
-		bool gridIntersects = false;
+		vector<ofPolyline> lines;
 	};
 
 	bool intersectsChar(ofRectangle rect, vector<vector<ofPolyline>> charOutlines);
@@ -38,6 +38,10 @@ private:
 	void onFloatParamsChanged(float & newVal);
 	void onofVec2fParamsChanged(ofVec2f & newVal);
 	void onStringParamsChanged(string & newVal);
+
+	// clipper
+
+	ofx::CClipper clipper;
 
 };
 

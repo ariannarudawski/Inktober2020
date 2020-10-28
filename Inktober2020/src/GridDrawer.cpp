@@ -47,16 +47,31 @@ void GridDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 				float px = bricks ? ((r%2==0) ? ((c + 0.5f) * xStep) : (c * xStep)) : (c * xStep);
 				float py = r * yStep;
 				grid[c][r].gridBounds = ofRectangle(px, py, xStep, yStep);
-				grid[c][r].gridIntersects = intersectsChar(grid[c][r].gridBounds, charOutlines);
 
-				if (grid[c][r].gridIntersects)
+				ofPolyline insetLine;
+				insetLine.setClosed(true);
+				insetLine.addVertex(grid[c][r].gridBounds.getTopLeft() + glm::vec3(xStep * inset.get().x, yStep * inset.get().y, 0));
+				insetLine.addVertex(grid[c][r].gridBounds.getBottomLeft() + glm::vec3(xStep * inset.get().x, -yStep * inset.get().y, 0));
+				insetLine.addVertex(grid[c][r].gridBounds.getBottomRight() + glm::vec3(-xStep * inset.get().x, -yStep * inset.get().y, 0));
+				insetLine.addVertex(grid[c][r].gridBounds.getTopRight() + glm::vec3(-xStep * inset.get().x, yStep * inset.get().y, 0));
+				insetLine.addVertex(grid[c][r].gridBounds.getTopLeft() + glm::vec3(xStep * inset.get().x, yStep * inset.get().y, 0));
+
+				// use clipper to find outline of the overlap between this gridspace and the chars
+
+				clipper.Clear();
+
+				clipper.addPolyline(insetLine, ClipperLib::ptSubject);
+
+				for (int i = 0; i < charOutlines.size(); ++i)
 				{
-					grid[c][r].line.addVertex(grid[c][r].gridBounds.getTopLeft() + glm::vec3(xStep * inset.get().x, yStep * inset.get().y, 0));
-					grid[c][r].line.addVertex(grid[c][r].gridBounds.getBottomLeft() + glm::vec3(xStep * inset.get().x, -yStep * inset.get().y, 0));
-					grid[c][r].line.addVertex(grid[c][r].gridBounds.getBottomRight() + glm::vec3(-xStep * inset.get().x, -yStep * inset.get().y, 0));
-					grid[c][r].line.addVertex(grid[c][r].gridBounds.getTopRight() + glm::vec3(-xStep * inset.get().x, yStep * inset.get().y, 0));
-					grid[c][r].line.addVertex(grid[c][r].gridBounds.getTopLeft() + glm::vec3(xStep * inset.get().x, yStep * inset.get().y, 0));
-					lines.push_back(grid[c][r].line);
+					clipper.addPolylines(charOutlines[i], ClipperLib::ptClip);
+				}
+
+				grid[c][r].lines = clipper.getClipped(ClipperLib::ClipType::ctIntersection);
+
+				for (int i = 0; i < grid[c][r].lines.size(); ++i)
+				{
+					lines.push_back(grid[c][r].lines[i]);
 				}
 			}
 		}
