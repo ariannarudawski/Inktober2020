@@ -41,11 +41,11 @@ private:
 
 	ofParameter<bool> noiseOn;
 	ofParameter<float> noiseTime;
-	ofParameter<float> noiseScale;
+	ofParameter<ofVec2f> noiseScale;
 	ofParameter<ofVec2f> noiseResolution;
 
 	ofParameter<bool> randomOn;
-	ofParameter<float> randomScale;
+	ofParameter<ofVec2f> randomScale;
 
 
 	void onToggleNoiseOn(bool & newVal);

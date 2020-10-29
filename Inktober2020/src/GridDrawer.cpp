@@ -8,8 +8,8 @@ GridDrawer::GridDrawer(ofParameterGroup * mainGroup)
 {
 	lineGroup.setName("GRID SQUARES");
 	
-	lineGroup.add(columns.set("columns", 20, 2, 50));
-	lineGroup.add(rows.set("rows", 20, 2, 50));
+	lineGroup.add(columns.set("columns", 20, 1, 50));
+	lineGroup.add(rows.set("rows", 20, 1, 50));
 	lineGroup.add(bricks.set("bricks", false));
 	lineGroup.add(inset.set("inset", ofVec2f(0.05f), ofVec2f(-1.0f), ofVec2f(1.0f)));
 
@@ -17,8 +17,8 @@ GridDrawer::GridDrawer(ofParameterGroup * mainGroup)
 
 	lineGroup.add(noiseOn.set("noise on", false));
 	noiseTime.set("noise time", 0, 0, 1000);
-	noiseScale.set("noise scale", 1, 0, 100);
-	noiseResolution.set("noise resolution", ofVec2f(0.5), ofVec2f(-1), ofVec2f(1));
+	noiseScale.set("noise scale", ofVec2f(1), ofVec2f(-100), ofVec2f(100));
+	noiseResolution.set("noise resolution", ofVec2f(0.5), ofVec2f(-100), ofVec2f(100));
 
 	if (noiseOn.get())
 	{
@@ -29,8 +29,8 @@ GridDrawer::GridDrawer(ofParameterGroup * mainGroup)
 
 	// randomness parameters
 
-	lineGroup.add(randomOn.set("randomness on", false));
-	randomScale.set("randomness scale", 1, 0, 100);
+	lineGroup.add(randomOn.set("random on", false));
+	randomScale.set("random scale", ofVec2f(1), ofVec2f(-100), ofVec2f(100));
 
 	if (randomOn.get())
 	{
@@ -55,14 +55,14 @@ void GridDrawer::setup(ofApp * app)
 	noiseOn.addListener(app, &ofApp::onUpdateBool);
 
 	noiseTime.addListener(this, &GridDrawer::onFloatParamsChanged);
-	noiseScale.addListener(this, &GridDrawer::onFloatParamsChanged);
+	noiseScale.addListener(this, &GridDrawer::onofVec2fParamsChanged);
 	noiseResolution.addListener(this, &GridDrawer::onofVec2fParamsChanged);
 
 	randomOn.addListener(this, &GridDrawer::onToggleRandomOn);
 	randomOn.addListener(this, &GridDrawer::onBoolParamsChanged);
 	randomOn.addListener(app, &ofApp::onUpdateBool);
 
-	randomScale.addListener(this, &GridDrawer::onFloatParamsChanged);
+	randomScale.addListener(this, &GridDrawer::onofVec2fParamsChanged);
 
 	columns.addListener(this, &GridDrawer::onIntParamsChanged);
 	rows.addListener(this, &GridDrawer::onIntParamsChanged);
@@ -125,15 +125,15 @@ void GridDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 
 					if (noiseOn || randomOn)
 					{
-						float heightScale = (c < columns * 0.5f) ?
-							ofMap(r, rows * 0.4f, rows, 0, 1, true)
-							: ofMap(r, rows * 0.6f, 0, 0, 1, true);
+						float x = c * noiseResolution.get().x;
+						float y = r * noiseResolution.get().y;
 
-						ofPoint offset = noiseOn ?
-							ofPoint(ofMap(ofNoise(c * noiseResolution.get().x, noiseTime.get() + 1000), 0, 1, -noiseScale, noiseScale), ofMap(ofNoise(r * noiseResolution.get().y, noiseTime.get() - 1000), 0, 1, -noiseScale, noiseScale)) :
-							ofPoint(ofRandom(-1, 1), ofRandom(-1, 1)) * randomScale;
+						ofPoint offset = noiseOn 
+							? ofPoint(ofMap(ofNoise(x, y, noiseTime.get() + 1000), 0, 1, -1, 1),
+								ofMap(ofNoise(y, x, noiseTime.get() - 1000), 0, 1, -1, 1)) * noiseScale.get()
+							: ofPoint(ofRandom(-1, 1), ofRandom(-1, 1)) * randomScale.get();
 
-						line.translate(offset * heightScale);
+						line.translate(offset);
 					}
 
 					lines.push_back(line);
