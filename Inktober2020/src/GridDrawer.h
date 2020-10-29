@@ -39,6 +39,18 @@ private:
 	void onofVec2fParamsChanged(ofVec2f & newVal);
 	void onStringParamsChanged(string & newVal);
 
+	ofParameter<bool> noiseOn;
+	ofParameter<float> noiseTime;
+	ofParameter<float> noiseScale;
+	ofParameter<ofVec2f> noiseResolution;
+
+	ofParameter<bool> randomOn;
+	ofParameter<float> randomScale;
+
+
+	void onToggleNoiseOn(bool & newVal);
+	void onToggleRandomOn(bool & newVal);
+
 	// clipper
 
 	ofx::CClipper clipper;

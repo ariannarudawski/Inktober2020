@@ -13,12 +13,62 @@ GridDrawer::GridDrawer(ofParameterGroup * mainGroup)
 	lineGroup.add(bricks.set("bricks", false));
 	lineGroup.add(inset.set("inset", ofVec2f(0.05f), ofVec2f(-1.0f), ofVec2f(1.0f)));
 
+	// noise parameters
+
+	lineGroup.add(noiseOn.set("noise on", false));
+	noiseTime.set("noise time", 0, 0, 1000);
+	noiseScale.set("noise scale", 1, 0, 100);
+	noiseResolution.set("noise resolution", ofVec2f(0.5), ofVec2f(-1), ofVec2f(1));
+
+	if (noiseOn.get())
+	{
+		lineGroup.add(noiseTime);
+		lineGroup.add(noiseScale);
+		lineGroup.add(noiseResolution);
+	}
+
+	// randomness parameters
+
+	lineGroup.add(randomOn.set("randomness on", false));
+	randomScale.set("randomness scale", 1, 0, 100);
+
+	if (randomOn.get())
+	{
+		lineGroup.add(randomScale);
+	}
+}
+
+void GridDrawer::setup(ofApp * app)
+{
+	LineDrawer::setup(app);
+
+	app->stringToDraw.addListener(this, &GridDrawer::onStringParamsChanged);
+	app->drawInnerLines.addListener(this, &GridDrawer::onBoolParamsChanged);
+	app->respace.addListener(this, &GridDrawer::onBoolParamsChanged);
+	app->position.addListener(this, &GridDrawer::onofVec2fParamsChanged);
+	app->size.addListener(this, &GridDrawer::onIntParamsChanged);
+	app->letterSpacing.addListener(this, &GridDrawer::onFloatParamsChanged);
+	app->spacing.addListener(this, &GridDrawer::onIntParamsChanged);
+
+	noiseOn.addListener(this, &GridDrawer::onToggleNoiseOn);
+	noiseOn.addListener(this, &GridDrawer::onBoolParamsChanged);
+	noiseOn.addListener(app, &ofApp::onUpdateBool);
+
+	noiseTime.addListener(this, &GridDrawer::onFloatParamsChanged);
+	noiseScale.addListener(this, &GridDrawer::onFloatParamsChanged);
+	noiseResolution.addListener(this, &GridDrawer::onofVec2fParamsChanged);
+
+	randomOn.addListener(this, &GridDrawer::onToggleRandomOn);
+	randomOn.addListener(this, &GridDrawer::onBoolParamsChanged);
+	randomOn.addListener(app, &ofApp::onUpdateBool);
+
+	randomScale.addListener(this, &GridDrawer::onFloatParamsChanged);
+
 	columns.addListener(this, &GridDrawer::onIntParamsChanged);
 	rows.addListener(this, &GridDrawer::onIntParamsChanged);
 	inset.addListener(this, &GridDrawer::onofVec2fParamsChanged);
 	bricks.addListener(this, &GridDrawer::onBoolParamsChanged);
 }
-
 
 void GridDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 {
@@ -71,7 +121,22 @@ void GridDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 
 				for (int i = 0; i < grid[c][r].lines.size(); ++i)
 				{
-					lines.push_back(grid[c][r].lines[i]);
+					ofPolyline line = grid[c][r].lines[i];
+
+					if (noiseOn || randomOn)
+					{
+						float heightScale = (c < columns * 0.5f) ?
+							ofMap(r, rows * 0.4f, rows, 0, 1, true)
+							: ofMap(r, rows * 0.6f, 0, 0, 1, true);
+
+						ofPoint offset = noiseOn ?
+							ofPoint(ofMap(ofNoise(c * noiseResolution.get().x, noiseTime.get() + 1000), 0, 1, -noiseScale, noiseScale), ofMap(ofNoise(r * noiseResolution.get().y, noiseTime.get() - 1000), 0, 1, -noiseScale, noiseScale)) :
+							ofPoint(ofRandom(-1, 1), ofRandom(-1, 1)) * randomScale;
+
+						line.translate(offset * heightScale);
+					}
+
+					lines.push_back(line);
 				}
 			}
 		}
@@ -87,19 +152,6 @@ void GridDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 	{
 		lines[l].draw();
 	}
-}
-
-void GridDrawer::setup(ofApp * app)
-{
-	LineDrawer::setup(app);
-
-	app->stringToDraw.addListener(this, &GridDrawer::onStringParamsChanged);
-	app->drawInnerLines.addListener(this, &GridDrawer::onBoolParamsChanged);
-	app->respace.addListener(this, &GridDrawer::onBoolParamsChanged);
-	app->position.addListener(this, &GridDrawer::onofVec2fParamsChanged);
-	app->size.addListener(this, &GridDrawer::onIntParamsChanged);
-	app->letterSpacing.addListener(this, &GridDrawer::onFloatParamsChanged);
-	app->spacing.addListener(this, &GridDrawer::onIntParamsChanged);
 }
 
 bool GridDrawer::intersectsChar(ofRectangle rect, vector<vector<ofPolyline>> charOutlines)
@@ -165,4 +217,35 @@ void GridDrawer::onofVec2fParamsChanged(ofVec2f & newVal)
 void GridDrawer::onStringParamsChanged(string & newVal)
 {
 	redoLines = true;
+}
+
+void GridDrawer::onToggleNoiseOn(bool & newVal)
+{
+	if (newVal)
+	{
+		randomOn = false;
+
+		lineGroup.add(noiseTime);
+		lineGroup.add(noiseScale);
+		lineGroup.add(noiseResolution);
+	}
+	else
+	{
+		lineGroup.remove(noiseTime);
+		lineGroup.remove(noiseScale);
+		lineGroup.remove(noiseResolution);
+	}
+}
+
+void GridDrawer::onToggleRandomOn(bool & newVal)
+{
+	if (newVal)
+	{
+		noiseOn = false;
+		lineGroup.add(randomScale);
+	}
+	else
+	{
+		lineGroup.remove(randomScale);
+	}
 }
