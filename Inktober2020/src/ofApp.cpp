@@ -9,6 +9,7 @@
 #include "VertToEdgeDrawer.h"
 #include "UnknownPleasuresDrawer.h"
 #include "GridDrawer.h"
+#include "ClipperDrawer.h"
 
 void ofApp::setup()
 {
@@ -20,7 +21,7 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "23")); 
+	stringGroup.add(stringToDraw.set("string to draw", "25")); 
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
@@ -47,6 +48,7 @@ void ofApp::setup()
 	lineDrawers.push_back(new VertToEdgeDrawer(&mainGroup));
 	lineDrawers.push_back(new UnknownPleasuresDrawer(&mainGroup));
 	lineDrawers.push_back(new GridDrawer(&mainGroup));
+	lineDrawers.push_back(new ClipperDrawer(&mainGroup));
 
 	for (auto & drawer : lineDrawers)
 	{
@@ -206,10 +208,7 @@ vector<vector<ofPolyline>> ofApp::GetAllCharOutlines()
 
 	// adjust for font size and letter spacing
 
-	if (respace.get())
-	{
-		font.setLetterSpacing(letterSpacing.get());
-	}
+	font.setLetterSpacing(letterSpacing.get());
 
 	ofPoint pos = ofPoint(position.get().x * ofGetWidth(), position.get().y * ofGetHeight()) - ofPoint(font.stringWidth(word) * 0.5f, font.stringHeight(word) * -0.5f);
 
@@ -246,7 +245,9 @@ vector<vector<ofPolyline>> ofApp::GetAllCharOutlines()
 
 				// resample by the defined density
 				float spacingEqualized = length / ((int)(length / spacing));
-				charOutlines[o] = charOutlines[o].getResampledBySpacing(spacingEqualized);
+
+				if (respace.get())
+					charOutlines[o] = charOutlines[o].getResampledBySpacing(spacingEqualized);
 
 				// remove the last point if it's still a copy of the first)
 
