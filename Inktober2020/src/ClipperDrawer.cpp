@@ -68,7 +68,7 @@ void ClipperDrawer::setup(ofApp * app)
 	drawPipeOutline.addListener(app, &ofApp::onUpdateBool);
 }
 
-void ClipperDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
+void ClipperDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts)
 {
 	if (!drawLines.get())
 		return;

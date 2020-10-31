@@ -31,7 +31,7 @@ UnknownPleasuresDrawer::UnknownPleasuresDrawer(ofParameterGroup * mainGroup)
 }
 
 
-void UnknownPleasuresDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
+void UnknownPleasuresDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts)
 {
 	if (!drawLines.get())
 		return;

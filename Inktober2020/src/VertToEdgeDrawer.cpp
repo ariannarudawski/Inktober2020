@@ -45,7 +45,7 @@ void VertToEdgeDrawer::setup(ofApp * app)
 	useCircularEdge.addListener(app, &ofApp::onUpdateBool);
 }
 
-void VertToEdgeDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
+void VertToEdgeDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts)
 {
 	if (!drawLines.get())
 		return;

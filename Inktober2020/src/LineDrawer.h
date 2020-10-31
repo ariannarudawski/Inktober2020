@@ -19,7 +19,7 @@ public:
 		drawLines.addListener(app, &ofApp::onUpdateBool);
 	};
 
-	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug) = 0;
+	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts) = 0;
 
 	string getName()
 	{

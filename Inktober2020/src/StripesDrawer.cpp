@@ -37,7 +37,7 @@ void StripesDrawer::setup(ofApp * app)
 	stripesNoiseOn.addListener(app, &ofApp::onUpdateBool);
 }
 
-void StripesDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
+void StripesDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts)
 {
 	if (!drawLines.get())
 		return;

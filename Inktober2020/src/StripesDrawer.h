@@ -12,7 +12,7 @@ public:
 
 	virtual void setup(ofApp * app);
 
-	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug);
+	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts);
 
 private:
 

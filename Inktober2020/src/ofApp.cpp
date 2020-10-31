@@ -25,6 +25,7 @@ void ofApp::setup()
 	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
+	stringGroup.add(sortVertsByPosition.set("sort verts by position", true));
 	stringGroup.add(letterSpacing.set("letter spacing", 1, -1, 3));
 
 	stringGroup.add(respace.set("respace vertices", true));
@@ -98,7 +99,7 @@ void ofApp::draw()
 
 	for (auto & drawer : lineDrawers)
 	{
-		drawer->draw(outlines, debug);
+		drawer->draw(outlines, debug, sortVertsByPosition);
 	}
 
 	// draw debug
@@ -267,6 +268,25 @@ vector<vector<ofPolyline>> ofApp::GetAllCharOutlines()
 		}
 
 		allCharOutlines.push_back(charOutlines);
+	}
+
+	// prep char outline points
+
+	if (sortVertsByPosition.get())
+	{
+		for (int c = 0; c < allCharOutlines.size(); ++c)
+		{
+			for (int co = 0; co < allCharOutlines[c].size(); ++co)
+			{
+				// top to bottom
+				sort(allCharOutlines[c][co].getVertices().begin(), allCharOutlines[c][co].getVertices().end(), [](const glm::vec3& lhs, const glm::vec3& rhs)
+				{
+					return lhs.x + lhs.y < rhs.x + rhs.y;
+				});
+
+				//allCharOutlines[c][co].setClosed(false);
+			}
+		}
 	}
 
 	return allCharOutlines;

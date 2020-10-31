@@ -18,7 +18,7 @@ MatchsticksDrawer::MatchsticksDrawer(ofParameterGroup * mainGroup)
 
 }
 
-void MatchsticksDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
+void MatchsticksDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts)
 {
 	if (!drawLines.get())
 		return;

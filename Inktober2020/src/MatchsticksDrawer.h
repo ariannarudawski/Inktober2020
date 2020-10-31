@@ -10,7 +10,7 @@ public:
 
 	MatchsticksDrawer(ofParameterGroup * mainGroup);
 
-	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug);
+	virtual void draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts);
 
 private:
 

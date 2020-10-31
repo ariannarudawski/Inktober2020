@@ -52,6 +52,7 @@ public:
 	ofParameter<int> size;
 	ofParameter<float> letterSpacing;
 	ofParameter<int> spacing;
+	ofParameter<bool> sortVertsByPosition;
 
 	void onUpdateSpacingFlag(bool & newVal);
 	void onUpdateSize(int & newSize);

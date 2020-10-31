@@ -44,10 +44,12 @@ void CurveDrawer::setup(ofApp * app)
 	curveSizeNoiseOn.addListener(app, &ofApp::onUpdateBool);
 }
 
-void CurveDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
+void CurveDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, bool sortedVerts)
 {
 	if (!drawLines.get())
 		return;
+
+	// create curve lines
 
 	vector<glm::vec3> points;
 	vector<glm::vec3> innerPoints;
@@ -86,9 +88,9 @@ void CurveDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug)
 			for (int l = 0; l < curveNumLines; ++l)
 			{
 				ofPolyline bLine;
-				bLine.setClosed(true);
+				bLine.setClosed(!sortedVerts);
 
-				for (int v = 0; v < points.size(); v++)
+				for (int v = 0; v < points.size()-1; v++)
 				{
 					ofPoint a = points[v];
 					ofPoint b = points[(v + 1) % points.size()];
