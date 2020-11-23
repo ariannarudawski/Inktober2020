@@ -20,6 +20,7 @@ private:
 	ofParameter<int> numVertsPerRing;
 	ofParameter<int> numRingsPerChain;
 	ofParameter<float> ringRadius;
+	ofParameter<float> deltaRadius;
 	ofParameter<float> ringSpacing;
 	ofParameter<float> startAngleRad;
 

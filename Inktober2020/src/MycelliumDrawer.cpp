@@ -13,6 +13,7 @@ MycelliumDrawer::MycelliumDrawer(ofParameterGroup * mainGroup)
 	lineGroup.add(numVertsPerRing.set("num verts per ring", 3, 1, 100));
 	lineGroup.add(numRingsPerChain.set("num rings per chain", 5, 1, 100));
 	lineGroup.add(ringRadius.set("ring radius", 10, 1, 100));
+	lineGroup.add(deltaRadius.set("delta radius", -5, -100, 100));
 	lineGroup.add(ringSpacing.set("ring spacing", 0.75, -2, 2));
 	lineGroup.add(startAngleRad.set("start angle radians", 0, 0, TWO_PI));
 
@@ -56,17 +57,23 @@ void MycelliumDrawer::draw(vector<vector<ofPolyline>> charOutlines, bool debug, 
 			for (int v = 0; v < verts.size(); ++v)
 			{
 				glm::vec2 center = verts[v];
-				float radius = ringRadius.get();
-				int numVerts = numVertsPerRing.get();
-
 				glm::vec2 travelDirection = charOutlines[c][co].getNormalAtIndex(v);
 				float travelDirectionRad = atan2(travelDirection.y, travelDirection.x) + startAngleRad;
 				travelDirection = glm::vec2(cos(travelDirectionRad), sin(travelDirectionRad));
 
 				for (int r = 0; r < numRingsPerChain; ++r)
 				{
-					ofPolyline line = CreateRing(center, travelDirectionRad, ringRadius, numVerts);
+					float radius = ringRadius.get() + (r * deltaRadius.get());
+
+					ofPolyline line = CreateRing(center, travelDirectionRad, radius, numVertsPerRing.get());
 					bLines.push_back(line);
+
+					if (noiseOn.get())
+					{
+						float noiseAngle = ofMap(ofNoise(((v * numVertsPerRing.get()) + r) * noiseResolution.get(), noiseTime.get()), 0, 1, -noiseScale.get(), noiseScale.get());
+						travelDirectionRad += noiseAngle;
+						travelDirection = glm::vec2(cos(travelDirectionRad), sin(travelDirectionRad));
+					}
 
 					center += travelDirection * radius * ringSpacing.get();
 				}

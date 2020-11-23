@@ -22,8 +22,8 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "0")); 
-	stringGroup.add(drawInnerLines.set("use all letter lines", false));
+	stringGroup.add(stringToDraw.set("string to draw", "28")); 
+	stringGroup.add(drawInnerLines.set("use all letter lines", true));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
 	stringGroup.add(sortVertsByPosition.set("sort verts by position", false));
