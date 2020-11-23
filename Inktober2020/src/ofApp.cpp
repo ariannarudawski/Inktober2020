@@ -10,6 +10,7 @@
 #include "UnknownPleasuresDrawer.h"
 #include "GridDrawer.h"
 #include "ClipperDrawer.h"
+#include "MycelliumDrawer.h"
 
 void ofApp::setup()
 {
@@ -21,11 +22,11 @@ void ofApp::setup()
 
 	stringGroup.setName("STRING");
 
-	stringGroup.add(stringToDraw.set("string to draw", "26")); 
-	stringGroup.add(drawInnerLines.set("use all letter lines", true));
+	stringGroup.add(stringToDraw.set("string to draw", "0")); 
+	stringGroup.add(drawInnerLines.set("use all letter lines", false));
 	stringGroup.add(position.set("center position", ofVec2f(0.5f, 0.5f), ofVec2f(0.0f, 0.0f), ofVec2f(1.0f, 1.0f)));
 	stringGroup.add(size.set("font size", 500, 10, 800));
-	stringGroup.add(sortVertsByPosition.set("sort verts by position", true));
+	stringGroup.add(sortVertsByPosition.set("sort verts by position", false));
 	stringGroup.add(letterSpacing.set("letter spacing", 1, -1, 3));
 
 	stringGroup.add(respace.set("respace vertices", true));
@@ -50,6 +51,7 @@ void ofApp::setup()
 	lineDrawers.push_back(new UnknownPleasuresDrawer(&mainGroup));
 	lineDrawers.push_back(new GridDrawer(&mainGroup));
 	lineDrawers.push_back(new ClipperDrawer(&mainGroup));
+	lineDrawers.push_back(new MycelliumDrawer(&mainGroup));
 
 	for (auto & drawer : lineDrawers)
 	{
